@@ -148,7 +148,7 @@ my-project/
 
 PDCA Kit is in early development. We welcome:
 
-- **Bug reports and feature requests** via [GitHub Issues](https://github.com/github/billqbwen/pdca-kit/issues/new)
+- **Bug reports and feature requests** via [GitHub Issues](https://github.com/billqbwen/pdca-kit/issues/new)
 - **Ideas and discussion** about the PDCA methodology applied to AI-driven development
 - **Code contributions** — check the codebase for areas that interest you
 
