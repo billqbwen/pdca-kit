@@ -1,0 +1,51 @@
+schema_version: "1.0"
+
+preset:
+  id: "lean"
+  name: "Lean Workflow"
+  version: "1.0.0"
+  description: "Minimal core workflow commands - just the prompt, just the artifact"
+  author: "github"
+  repository: "https://github.com/github/pdca-kit"
+  license: "MIT"
+
+requires:
+  pdca_version: ">=0.6.0"
+
+provides:
+  templates:
+    - type: "command"
+      name: "pdca.define"
+      file: "commands/pdca.define.md"
+      description: "Lean specify - create spec.md from a feature description"
+      replaces: "pdca.define"
+
+    - type: "command"
+      name: "pdca.plan"
+      file: "commands/pdca.plan.md"
+      description: "Lean plan - create plan.md from the spec"
+      replaces: "pdca.plan"
+
+    - type: "command"
+      name: "pdca.tasks"
+      file: "commands/pdca.tasks.md"
+      description: "Lean tasks - create tasks.md from plan and spec"
+      replaces: "pdca.tasks"
+
+    - type: "command"
+      name: "pdca.implement"
+      file: "commands/pdca.implement.md"
+      description: "Lean implement - execute tasks from tasks.md"
+      replaces: "pdca.implement"
+
+    - type: "command"
+      name: "pdca.constitution"
+      file: "commands/pdca.constitution.md"
+      description: "Lean constitution - create or update project constitution"
+      replaces: "pdca.constitution"
+
+tags:
+  - "lean"
+  - "minimal"
+  - "workflow"
+  - "core"

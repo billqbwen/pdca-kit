@@ -1,0 +1,16 @@
+schema_version: "1.0"
+extension:
+  id: selftest
+  name: PDCA Kit Self-Test Utility
+  version: 1.0.0
+  description: Verifies catalog extensions by programmatically walking through the discovery, installation, and registration lifecycle.
+  author: pdca-kit-core
+  repository: https://github.com/github/pdca-kit
+  license: MIT
+requires:
+  pdca_version: ">=0.2.0"
+provides:
+  commands:
+    - name: pdca.selftest.extension
+      file: commands/selftest.md
+      description: Validate the lifecycle of an extension from the catalog.

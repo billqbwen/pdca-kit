@@ -1,0 +1,933 @@
+"""
+Unit tests for extension skill auto-registration.
+
+Tests cover:
+- SKILL.md generation when --ai-skills was used during init
+- No skills created when ai_skills not active
+- SKILL.md content correctness
+- Existing user-modified skills not overwritten
+- Skill cleanup on extension removal
+- Registry metadata includes registered_skills
+"""
+
+import json
+import os
+import pytest
+import tempfile
+import shutil
+import yaml
+from pathlib import Path
+
+from pdca_cli.extensions import (
+    ExtensionManifest,
+    ExtensionManager,
+    ExtensionError,
+)
+
+
+# ===== Helpers =====
+
+def _create_init_options(project_root: Path, ai: str = "claude", ai_skills: bool = True):
+    """Write a .pdca/init-options.json file."""
+    opts_dir = project_root / ".pdca"
+    opts_dir.mkdir(parents=True, exist_ok=True)
+    opts_file = opts_dir / "init-options.json"
+    opts_file.write_text(json.dumps({
+        "ai": ai,
+        "ai_skills": ai_skills,
+        "script": "sh",
+    }))
+
+
+def _create_skills_dir(project_root: Path, ai: str = "claude") -> Path:
+    """Create and return the expected skills directory for the given agent."""
+    # Match the logic in _get_skills_dir() from pdca_cli
+    from pdca_cli import AGENT_CONFIG
+
+    agent_config = AGENT_CONFIG.get(ai, {})
+    agent_folder = agent_config.get("folder", "")
+    if agent_folder:
+        skills_dir = project_root / agent_folder.rstrip("/") / "skills"
+    else:
+        skills_dir = project_root / ".agents" / "skills"
+
+    skills_dir.mkdir(parents=True, exist_ok=True)
+    return skills_dir
+
+
+def _create_extension_dir(temp_dir: Path, ext_id: str = "test-ext") -> Path:
+    """Create a complete extension directory with manifest and command files."""
+    ext_dir = temp_dir / ext_id
+    ext_dir.mkdir()
+
+    manifest_data = {
+        "schema_version": "1.0",
+        "extension": {
+            "id": ext_id,
+            "name": "Test Extension",
+            "version": "1.0.0",
+            "description": "A test extension for skill registration",
+        },
+        "requires": {
+            "pdca_version": ">=0.1.0",
+        },
+        "provides": {
+            "commands": [
+                {
+                    "name": f"pdca.{ext_id}.hello",
+                    "file": "commands/hello.md",
+                    "description": "Test hello command",
+                },
+                {
+                    "name": f"pdca.{ext_id}.world",
+                    "file": "commands/world.md",
+                    "description": "Test world command",
+                },
+            ]
+        },
+    }
+
+    with open(ext_dir / "extension.yml", "w") as f:
+        yaml.dump(manifest_data, f)
+
+    commands_dir = ext_dir / "commands"
+    commands_dir.mkdir()
+
+    (commands_dir / "hello.md").write_text(
+        "---\n"
+        "description: \"Test hello command\"\n"
+        "---\n"
+        "\n"
+        "# Hello Command\n"
+        "\n"
+        "Run this to say hello.\n"
+        "$ARGUMENTS\n"
+    )
+
+    (commands_dir / "world.md").write_text(
+        "---\n"
+        "description: \"Test world command\"\n"
+        "---\n"
+        "\n"
+        "# World Command\n"
+        "\n"
+        "Run this to greet the world.\n"
+    )
+
+    return ext_dir
+
+
+def _can_create_symlink(temp_dir: Path) -> bool:
+    """Return True when the current platform/user can create file symlinks."""
+    target = temp_dir / "symlink-target.txt"
+    link = temp_dir / "symlink-link.txt"
+    target.write_text("ok", encoding="utf-8")
+    try:
+        os.symlink(target, link)
+    except OSError:
+        return False
+    return link.is_symlink()
+
+
+# ===== Fixtures =====
+
+@pytest.fixture
+def temp_dir():
+    """Create a temporary directory for tests."""
+    tmpdir = tempfile.mkdtemp()
+    yield Path(tmpdir)
+    shutil.rmtree(tmpdir)
+
+
+@pytest.fixture
+def project_dir(temp_dir):
+    """Create a mock pdca-kit project directory."""
+    proj_dir = temp_dir / "project"
+    proj_dir.mkdir()
+
+    # Create .pdca directory
+    specify_dir = proj_dir / ".pdca"
+    specify_dir.mkdir()
+
+    return proj_dir
+
+
+@pytest.fixture
+def extension_dir(temp_dir):
+    """Create a complete extension directory."""
+    return _create_extension_dir(temp_dir)
+
+
+@pytest.fixture
+def skills_project(project_dir):
+    """Create a project with --ai-skills enabled and skills directory."""
+    _create_init_options(project_dir, ai="claude", ai_skills=True)
+    skills_dir = _create_skills_dir(project_dir, ai="claude")
+    return project_dir, skills_dir
+
+
+@pytest.fixture
+def no_skills_project(project_dir):
+    """Create a project without --ai-skills."""
+    _create_init_options(project_dir, ai="claude", ai_skills=False)
+    return project_dir
+
+
+# ===== ExtensionManager._get_skills_dir Tests =====
+
+class TestExtensionManagerGetSkillsDir:
+    """Test _get_skills_dir() on ExtensionManager."""
+
+    def test_returns_skills_dir_when_active(self, skills_project):
+        """Should return skills dir when ai_skills is true and dir exists."""
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        result = manager._get_skills_dir()
+        assert result == skills_dir
+
+    def test_returns_none_when_no_ai_skills(self, no_skills_project):
+        """Should return None when ai_skills is false and not create the dir."""
+        manager = ExtensionManager(no_skills_project)
+        result = manager._get_skills_dir()
+        assert result is None
+        # Ensure the directory was NOT created on disk
+        from pdca_cli import _get_skills_dir as resolve_skills_dir
+        skills_path = resolve_skills_dir(no_skills_project, "claude")
+        assert not skills_path.exists()
+
+    def test_returns_none_when_no_init_options(self, project_dir):
+        """Should return None when init-options.json is missing and not create any dir."""
+        manager = ExtensionManager(project_dir)
+        result = manager._get_skills_dir()
+        assert result is None
+        # No agent skills directory should have been created
+        assert not (project_dir / ".claude" / "skills").exists()
+        assert not (project_dir / ".agents" / "skills").exists()
+
+    def test_creates_skills_dir_on_demand(self, project_dir):
+        """Should create skills dir when ai_skills is enabled but dir is missing."""
+        _create_init_options(project_dir, ai="claude", ai_skills=True)
+        # Don't create the skills directory — _get_skills_dir should do it
+        manager = ExtensionManager(project_dir)
+        result = manager._get_skills_dir()
+        assert result is not None
+        assert result.is_dir()
+
+    def test_returns_kimi_skills_dir_when_ai_skills_disabled(self, project_dir):
+        """Kimi should still use its native skills dir when ai_skills is false."""
+        _create_init_options(project_dir, ai="kimi", ai_skills=False)
+        skills_dir = _create_skills_dir(project_dir, ai="kimi")
+        manager = ExtensionManager(project_dir)
+        result = manager._get_skills_dir()
+        assert result == skills_dir
+
+    def test_returns_none_for_non_dict_init_options(self, project_dir):
+        """Corrupted-but-parseable init-options should not crash skill-dir lookup."""
+        opts_file = project_dir / ".pdca" / "init-options.json"
+        opts_file.parent.mkdir(parents=True, exist_ok=True)
+        opts_file.write_text("[]")
+        _create_skills_dir(project_dir, ai="claude")
+        manager = ExtensionManager(project_dir)
+        result = manager._get_skills_dir()
+        assert result is None
+
+
+# ===== Extension Skill Registration Tests =====
+
+class TestExtensionSkillRegistration:
+    """Test _register_extension_skills() on ExtensionManager."""
+
+    def test_skills_created_when_ai_skills_active(self, skills_project, extension_dir):
+        """Skills should be created when ai_skills is enabled."""
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        # Check that skill directories were created
+        skill_dirs = sorted([d.name for d in skills_dir.iterdir() if d.is_dir()])
+        assert "pdca-test-ext-hello" in skill_dirs
+        assert "pdca-test-ext-world" in skill_dirs
+
+    def test_skill_md_content_correct(self, skills_project, extension_dir):
+        """SKILL.md should have correct agentskills.io structure."""
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        skill_file = skills_dir / "pdca-test-ext-hello" / "SKILL.md"
+        assert skill_file.exists()
+        content = skill_file.read_text()
+
+        # Check structure
+        assert content.startswith("---\n")
+        assert "name: pdca-test-ext-hello" in content
+        assert "description:" in content
+        assert "Test hello command" in content
+        assert "source: extension:test-ext" in content
+        assert "author: github-pdca-kit" in content
+        assert "compatibility:" in content
+        assert "Run this to say hello." in content
+
+    def test_skill_md_has_parseable_yaml(self, skills_project, extension_dir):
+        """Generated SKILL.md should contain valid, parseable YAML frontmatter."""
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        skill_file = skills_dir / "pdca-test-ext-hello" / "SKILL.md"
+        content = skill_file.read_text()
+
+        assert content.startswith("---\n")
+        parts = content.split("---", 2)
+        assert len(parts) >= 3
+        parsed = yaml.safe_load(parts[1])
+        assert isinstance(parsed, dict)
+        assert parsed["name"] == "pdca-test-ext-hello"
+        assert "description" in parsed
+        assert parsed["disable-model-invocation"] is False
+
+    def test_no_skills_when_ai_skills_disabled(self, no_skills_project, extension_dir):
+        """No skills should be created when ai_skills is false."""
+        manager = ExtensionManager(no_skills_project)
+        manifest = manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        # Verify registry
+        metadata = manager.registry.get(manifest.id)
+        assert metadata["registered_skills"] == []
+
+    def test_no_skills_when_init_options_missing(self, project_dir, extension_dir):
+        """No skills should be created when init-options.json is absent."""
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        metadata = manager.registry.get(manifest.id)
+        assert metadata["registered_skills"] == []
+
+    def test_existing_skill_not_overwritten(self, skills_project, extension_dir):
+        """Pre-existing SKILL.md should not be overwritten."""
+        project_dir, skills_dir = skills_project
+
+        # Pre-create a custom skill
+        custom_dir = skills_dir / "pdca-test-ext-hello"
+        custom_dir.mkdir(parents=True)
+        custom_content = "# My Custom Hello Skill\nUser-modified content\n"
+        (custom_dir / "SKILL.md").write_text(custom_content)
+
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        # Custom skill should be untouched
+        assert (custom_dir / "SKILL.md").read_text() == custom_content
+
+        # But the other skill should still be created
+        metadata = manager.registry.get(manifest.id)
+        assert "pdca-test-ext-world" in metadata["registered_skills"]
+        # The pre-existing one should NOT be in registered_skills (it was skipped)
+        assert "pdca-test-ext-hello" not in metadata["registered_skills"]
+
+    def test_dev_skill_symlink_refreshes_existing_cache(
+        self, skills_project, extension_dir, temp_dir
+    ):
+        """Dev-mode skill symlinks should refresh rendered cache content."""
+        if not _can_create_symlink(temp_dir):
+            pytest.skip("Current platform/user cannot create symlinks")
+
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        manifest = ExtensionManifest(extension_dir / "extension.yml")
+
+        manager._register_extension_skills(
+            manifest,
+            extension_dir,
+            link_outputs=True,
+        )
+
+        skill_file = skills_dir / "pdca-test-ext-hello" / "SKILL.md"
+        assert skill_file.is_symlink()
+        assert "Run this to say hello." in skill_file.read_text(encoding="utf-8")
+
+        (extension_dir / "commands" / "hello.md").write_text(
+            "---\n"
+            "description: \"Updated test hello command\"\n"
+            "---\n"
+            "\n"
+            "# Hello Command\n"
+            "\n"
+            "Run this updated hello.\n"
+        )
+
+        written = manager._register_extension_skills(
+            manifest,
+            extension_dir,
+            link_outputs=True,
+        )
+
+        assert "pdca-test-ext-hello" in written
+        assert "Run this updated hello." in skill_file.read_text(encoding="utf-8")
+
+    def test_dev_skill_registration_falls_back_to_copy_when_symlink_fails(
+        self, skills_project, extension_dir, monkeypatch
+    ):
+        """Dev-mode skill registration works when Windows cannot create symlinks."""
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        manifest = ExtensionManifest(extension_dir / "extension.yml")
+
+        def raise_windows_symlink_error(target, link):
+            raise OSError("A required privilege is not held by the client")
+
+        monkeypatch.setattr(
+            "pdca_cli.extensions.os.symlink", raise_windows_symlink_error
+        )
+
+        written = manager._register_extension_skills(
+            manifest,
+            extension_dir,
+            link_outputs=True,
+        )
+
+        skill_file = skills_dir / "pdca-test-ext-hello" / "SKILL.md"
+        assert "pdca-test-ext-hello" in written
+        assert skill_file.exists()
+        assert not skill_file.is_symlink()
+        assert "Run this to say hello." in skill_file.read_text(encoding="utf-8")
+        assert (
+            extension_dir
+            / ".pdca-dev"
+            / "extension-skills"
+            / "pdca-test-ext-hello"
+            / "SKILL.md"
+        ).exists()
+
+    def test_dev_skill_registration_falls_back_to_copy_when_relpath_fails(
+        self, skills_project, extension_dir, monkeypatch
+    ):
+        """Dev-mode skill registration stays functional across Windows drive roots."""
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        manifest = ExtensionManifest(extension_dir / "extension.yml")
+
+        def raise_relpath_error(path, start=None):
+            raise ValueError("path is on mount 'D:', start on mount 'C:'")
+
+        monkeypatch.setattr(
+            "pdca_cli.extensions.os.path.relpath", raise_relpath_error
+        )
+
+        written = manager._register_extension_skills(
+            manifest,
+            extension_dir,
+            link_outputs=True,
+        )
+
+        skill_file = skills_dir / "pdca-test-ext-hello" / "SKILL.md"
+        assert "pdca-test-ext-hello" in written
+        assert skill_file.exists()
+        assert not skill_file.is_symlink()
+        assert "Run this to say hello." in skill_file.read_text(encoding="utf-8")
+        assert (
+            extension_dir
+            / ".pdca-dev"
+            / "extension-skills"
+            / "pdca-test-ext-hello"
+            / "SKILL.md"
+        ).exists()
+
+    def test_dev_skill_registration_falls_back_to_copy_when_cache_write_fails(
+        self, skills_project, extension_dir, monkeypatch
+    ):
+        """Dev-mode skill registration stays functional when the dev cache is unwritable."""
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        manifest = ExtensionManifest(extension_dir / "extension.yml")
+        original_write_text = Path.write_text
+
+        def raise_cache_write_error(path, *args, **kwargs):
+            if ".pdca-dev" in path.parts:
+                raise OSError("cache is not writable")
+            return original_write_text(path, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "write_text", raise_cache_write_error)
+
+        written = manager._register_extension_skills(
+            manifest,
+            extension_dir,
+            link_outputs=True,
+        )
+
+        skill_file = skills_dir / "pdca-test-ext-hello" / "SKILL.md"
+        assert "pdca-test-ext-hello" in written
+        assert skill_file.exists()
+        assert not skill_file.is_symlink()
+        assert "Run this to say hello." in skill_file.read_text(encoding="utf-8")
+        assert not (
+            extension_dir
+            / ".pdca-dev"
+            / "extension-skills"
+            / "pdca-test-ext-hello"
+            / "SKILL.md"
+        ).exists()
+
+    def test_registered_skills_in_registry(self, skills_project, extension_dir):
+        """Registry should contain registered_skills list."""
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        metadata = manager.registry.get(manifest.id)
+        assert "registered_skills" in metadata
+        assert len(metadata["registered_skills"]) == 2
+        assert "pdca-test-ext-hello" in metadata["registered_skills"]
+        assert "pdca-test-ext-world" in metadata["registered_skills"]
+
+    def test_kimi_uses_hyphenated_skill_names(self, project_dir, temp_dir):
+        """Kimi agent should use the same hyphenated skill names as hooks."""
+        _create_init_options(project_dir, ai="kimi", ai_skills=True)
+        _create_skills_dir(project_dir, ai="kimi")
+        ext_dir = _create_extension_dir(temp_dir, ext_id="test-ext")
+
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            ext_dir, "0.1.0", register_commands=False
+        )
+
+        metadata = manager.registry.get(manifest.id)
+        assert "pdca-test-ext-hello" in metadata["registered_skills"]
+        assert "pdca-test-ext-world" in metadata["registered_skills"]
+
+    def test_kimi_creates_skills_when_ai_skills_disabled(self, project_dir, temp_dir):
+        """Kimi should still auto-register extension skills in native-skills mode."""
+        _create_init_options(project_dir, ai="kimi", ai_skills=False)
+        skills_dir = _create_skills_dir(project_dir, ai="kimi")
+        ext_dir = _create_extension_dir(temp_dir, ext_id="test-ext")
+
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            ext_dir, "0.1.0", register_commands=False
+        )
+
+        metadata = manager.registry.get(manifest.id)
+        assert "pdca-test-ext-hello" in metadata["registered_skills"]
+        assert "pdca-test-ext-world" in metadata["registered_skills"]
+        assert (skills_dir / "pdca-test-ext-hello" / "SKILL.md").exists()
+
+    def test_skill_registration_resolves_script_placeholders(self, project_dir, temp_dir):
+        """Auto-registered extension skills should resolve script placeholders."""
+        _create_init_options(project_dir, ai="claude", ai_skills=True)
+        skills_dir = _create_skills_dir(project_dir, ai="claude")
+
+        ext_dir = temp_dir / "scripted-ext"
+        ext_dir.mkdir()
+        manifest_data = {
+            "schema_version": "1.0",
+            "extension": {
+                "id": "scripted-ext",
+                "name": "Scripted Extension",
+                "version": "1.0.0",
+                "description": "Test",
+            },
+            "requires": {"pdca_version": ">=0.1.0"},
+            "provides": {
+                "commands": [
+                    {
+                        "name": "pdca.scripted-ext.plan",
+                        "file": "commands/plan.md",
+                        "description": "Scripted plan command",
+                    }
+                ]
+            },
+        }
+        with open(ext_dir / "extension.yml", "w") as f:
+            yaml.dump(manifest_data, f)
+
+        (ext_dir / "commands").mkdir()
+        (ext_dir / "commands" / "plan.md").write_text(
+            "---\n"
+            "description: Scripted plan command\n"
+            "scripts:\n"
+            "  sh: ../../scripts/bash/setup-plan.sh --json \"{ARGS}\"\n"
+            "---\n\n"
+            "Run {SCRIPT}\n"
+            "Review templates/checklist.md and memory/constitution.md for __AGENT__.\n"
+        )
+
+        manager = ExtensionManager(project_dir)
+        manager.install_from_directory(ext_dir, "0.1.0", register_commands=False)
+
+        content = (skills_dir / "pdca-scripted-ext-plan" / "SKILL.md").read_text()
+        assert "{SCRIPT}" not in content
+        assert "{ARGS}" not in content
+        assert "__AGENT__" not in content
+        assert '.pdca/scripts/bash/setup-plan.sh --json "$ARGUMENTS"' in content
+        assert ".pdca/templates/checklist.md" in content
+        assert ".pdca/memory/constitution.md" in content
+
+    def test_missing_command_file_skipped(self, skills_project, temp_dir):
+        """Commands with missing source files should be skipped gracefully."""
+        project_dir, skills_dir = skills_project
+
+        ext_dir = temp_dir / "missing-cmd-ext"
+        ext_dir.mkdir()
+        manifest_data = {
+            "schema_version": "1.0",
+            "extension": {
+                "id": "missing-cmd-ext",
+                "name": "Missing Cmd Extension",
+                "version": "1.0.0",
+                "description": "Test",
+            },
+            "requires": {"pdca_version": ">=0.1.0"},
+            "provides": {
+                "commands": [
+                    {
+                        "name": "pdca.missing-cmd-ext.exists",
+                        "file": "commands/exists.md",
+                        "description": "Exists",
+                    },
+                    {
+                        "name": "pdca.missing-cmd-ext.ghost",
+                        "file": "commands/ghost.md",
+                        "description": "Does not exist",
+                    },
+                ]
+            },
+        }
+        with open(ext_dir / "extension.yml", "w") as f:
+            yaml.dump(manifest_data, f)
+
+        (ext_dir / "commands").mkdir()
+        (ext_dir / "commands" / "exists.md").write_text(
+            "---\ndescription: Exists\n---\n\n# Exists\n\nBody.\n"
+        )
+        # Intentionally do NOT create ghost.md
+
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            ext_dir, "0.1.0", register_commands=False
+        )
+
+        metadata = manager.registry.get(manifest.id)
+        assert "pdca-missing-cmd-ext-exists" in metadata["registered_skills"]
+        assert "pdca-missing-cmd-ext-ghost" not in metadata["registered_skills"]
+
+    @pytest.mark.parametrize("ai", ["claude", "codex"])
+    def test_skills_registered_when_dir_missing(self, project_dir, temp_dir, ai):
+        """Extension add should create skills dir on demand and register skills.
+
+        Regression test for https://github.com/github/pdca-kit/issues/2682:
+        when an extension is installed before the agent skills directory exists,
+        skills must still be materialized (the directory is created on demand).
+        """
+        _create_init_options(project_dir, ai=ai, ai_skills=True)
+        # Deliberately do NOT create the skills directory
+        ext_dir = _create_extension_dir(temp_dir, ext_id="early-ext")
+
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            ext_dir, "0.1.0", register_commands=False
+        )
+
+        # Skills dir should have been created automatically
+        from pdca_cli import _get_skills_dir as resolve_skills_dir
+        skills_dir = resolve_skills_dir(project_dir, ai)
+        assert skills_dir.is_dir()
+
+        # SKILL.md files should exist
+        assert (skills_dir / "pdca-early-ext-hello" / "SKILL.md").exists()
+        assert (skills_dir / "pdca-early-ext-world" / "SKILL.md").exists()
+
+        # Registry should record them
+        metadata = manager.registry.get(manifest.id)
+        assert len(metadata["registered_skills"]) == 2
+        assert "pdca-early-ext-hello" in metadata["registered_skills"]
+        assert "pdca-early-ext-world" in metadata["registered_skills"]
+
+
+# ===== Extension Skill Unregistration Tests =====
+
+class TestExtensionSkillUnregistration:
+    """Test _unregister_extension_skills() on ExtensionManager."""
+
+    def test_skills_removed_on_extension_remove(self, skills_project, extension_dir):
+        """Removing an extension should clean up its skill directories."""
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        # Verify skills exist
+        assert (skills_dir / "pdca-test-ext-hello" / "SKILL.md").exists()
+        assert (skills_dir / "pdca-test-ext-world" / "SKILL.md").exists()
+
+        # Remove extension
+        result = manager.remove(manifest.id, keep_config=False)
+        assert result is True
+
+        # Skills should be gone
+        assert not (skills_dir / "pdca-test-ext-hello").exists()
+        assert not (skills_dir / "pdca-test-ext-world").exists()
+
+    def test_other_skills_preserved_on_remove(self, skills_project, extension_dir):
+        """Non-extension skills should not be affected by extension removal."""
+        project_dir, skills_dir = skills_project
+
+        # Pre-create a custom skill
+        custom_dir = skills_dir / "my-custom-skill"
+        custom_dir.mkdir(parents=True)
+        (custom_dir / "SKILL.md").write_text("# My Custom Skill\n")
+
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        manager.remove(manifest.id, keep_config=False)
+
+        # Custom skill should still exist
+        assert (custom_dir / "SKILL.md").exists()
+        assert (custom_dir / "SKILL.md").read_text() == "# My Custom Skill\n"
+
+    def test_remove_handles_already_deleted_skills(self, skills_project, extension_dir):
+        """Gracefully handle case where skill dirs were already deleted."""
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        # Manually delete skill dirs before calling remove
+        shutil.rmtree(skills_dir / "pdca-test-ext-hello")
+        shutil.rmtree(skills_dir / "pdca-test-ext-world")
+
+        # Should not raise
+        result = manager.remove(manifest.id, keep_config=False)
+        assert result is True
+
+    def test_remove_no_skills_when_not_active(self, no_skills_project, extension_dir):
+        """Removal without active skills should not attempt skill cleanup."""
+        manager = ExtensionManager(no_skills_project)
+        manifest = manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        # Should not raise even though no skills exist
+        result = manager.remove(manifest.id, keep_config=False)
+        assert result is True
+
+
+# ===== Command File Without Frontmatter =====
+
+class TestExtensionSkillEdgeCases:
+    """Test edge cases in extension skill registration."""
+
+    def test_install_with_non_dict_init_options_does_not_crash(self, project_dir, extension_dir):
+        """Corrupted init-options payloads should disable skill registration, not crash install."""
+        opts_file = project_dir / ".pdca" / "init-options.json"
+        opts_file.parent.mkdir(parents=True, exist_ok=True)
+        opts_file.write_text("[]")
+        _create_skills_dir(project_dir, ai="claude")
+
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        metadata = manager.registry.get(manifest.id)
+        assert metadata["registered_skills"] == []
+
+    def test_command_without_frontmatter(self, skills_project, temp_dir):
+        """Commands without YAML frontmatter should still produce valid skills."""
+        project_dir, skills_dir = skills_project
+
+        ext_dir = temp_dir / "nofm-ext"
+        ext_dir.mkdir()
+        manifest_data = {
+            "schema_version": "1.0",
+            "extension": {
+                "id": "nofm-ext",
+                "name": "No Frontmatter Extension",
+                "version": "1.0.0",
+                "description": "Test",
+            },
+            "requires": {"pdca_version": ">=0.1.0"},
+            "provides": {
+                "commands": [
+                    {
+                        "name": "pdca.nofm-ext.plain",
+                        "file": "commands/plain.md",
+                        "description": "Plain command",
+                    }
+                ]
+            },
+        }
+        with open(ext_dir / "extension.yml", "w") as f:
+            yaml.dump(manifest_data, f)
+
+        (ext_dir / "commands").mkdir()
+        (ext_dir / "commands" / "plain.md").write_text(
+            "# Plain Command\n\nBody without frontmatter.\n"
+        )
+
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            ext_dir, "0.1.0", register_commands=False
+        )
+
+        skill_file = skills_dir / "pdca-nofm-ext-plain" / "SKILL.md"
+        assert skill_file.exists()
+        content = skill_file.read_text()
+        assert "name: pdca-nofm-ext-plain" in content
+        # Fallback description when no frontmatter description
+        assert "Extension command: pdca.nofm-ext.plain" in content
+        assert "Body without frontmatter." in content
+
+    def test_gemini_agent_skills(self, project_dir, temp_dir):
+        """Gemini agent should use .gemini/skills/ for skill directory."""
+        _create_init_options(project_dir, ai="gemini", ai_skills=True)
+        _create_skills_dir(project_dir, ai="gemini")
+        ext_dir = _create_extension_dir(temp_dir, ext_id="test-ext")
+
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            ext_dir, "0.1.0", register_commands=False
+        )
+
+        skills_dir = project_dir / ".gemini" / "skills"
+        assert (skills_dir / "pdca-test-ext-hello" / "SKILL.md").exists()
+        assert (skills_dir / "pdca-test-ext-world" / "SKILL.md").exists()
+
+    def test_multiple_extensions_independent_skills(self, skills_project, temp_dir):
+        """Installing and removing different extensions should be independent."""
+        project_dir, skills_dir = skills_project
+
+        ext_dir_a = _create_extension_dir(temp_dir, ext_id="ext-a")
+        ext_dir_b = _create_extension_dir(temp_dir, ext_id="ext-b")
+
+        manager = ExtensionManager(project_dir)
+        manifest_a = manager.install_from_directory(
+            ext_dir_a, "0.1.0", register_commands=False
+        )
+        manifest_b = manager.install_from_directory(
+            ext_dir_b, "0.1.0", register_commands=False
+        )
+
+        # Both should have skills
+        assert (skills_dir / "pdca-ext-a-hello" / "SKILL.md").exists()
+        assert (skills_dir / "pdca-ext-b-hello" / "SKILL.md").exists()
+
+        # Remove ext-a
+        manager.remove("ext-a", keep_config=False)
+
+        # ext-a skills gone, ext-b skills preserved
+        assert not (skills_dir / "pdca-ext-a-hello").exists()
+        assert (skills_dir / "pdca-ext-b-hello" / "SKILL.md").exists()
+
+    def test_malformed_frontmatter_handled(self, skills_project, temp_dir):
+        """Commands with invalid YAML frontmatter should still produce valid skills."""
+        project_dir, skills_dir = skills_project
+
+        ext_dir = temp_dir / "badfm-ext"
+        ext_dir.mkdir()
+        manifest_data = {
+            "schema_version": "1.0",
+            "extension": {
+                "id": "badfm-ext",
+                "name": "Bad Frontmatter Extension",
+                "version": "1.0.0",
+                "description": "Test",
+            },
+            "requires": {"pdca_version": ">=0.1.0"},
+            "provides": {
+                "commands": [
+                    {
+                        "name": "pdca.badfm-ext.broken",
+                        "file": "commands/broken.md",
+                        "description": "Broken frontmatter",
+                    }
+                ]
+            },
+        }
+        with open(ext_dir / "extension.yml", "w") as f:
+            yaml.dump(manifest_data, f)
+
+        (ext_dir / "commands").mkdir()
+        # Malformed YAML: invalid key-value syntax
+        (ext_dir / "commands" / "broken.md").write_text(
+            "---\n"
+            "description: [invalid yaml\n"
+            "  unclosed: bracket\n"
+            "---\n"
+            "\n"
+            "# Broken Command\n"
+            "\n"
+            "This body should still be used.\n"
+        )
+
+        manager = ExtensionManager(project_dir)
+        # Should not raise
+        manifest = manager.install_from_directory(
+            ext_dir, "0.1.0", register_commands=False
+        )
+
+        skill_file = skills_dir / "pdca-badfm-ext-broken" / "SKILL.md"
+        assert skill_file.exists()
+        content = skill_file.read_text()
+        # Fallback description since frontmatter was invalid
+        assert "Extension command: pdca.badfm-ext.broken" in content
+        assert "This body should still be used." in content
+
+    def test_remove_cleans_up_when_init_options_deleted(self, skills_project, extension_dir):
+        """Skills should be cleaned up even if init-options.json is deleted after install."""
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        # Verify skills exist
+        assert (skills_dir / "pdca-test-ext-hello" / "SKILL.md").exists()
+
+        # Delete init-options.json to simulate user change
+        init_opts = project_dir / ".pdca" / "init-options.json"
+        init_opts.unlink()
+
+        # Remove should still clean up via fallback scan
+        result = manager.remove(manifest.id, keep_config=False)
+        assert result is True
+        assert not (skills_dir / "pdca-test-ext-hello").exists()
+        assert not (skills_dir / "pdca-test-ext-world").exists()
+
+    def test_remove_cleans_up_when_ai_skills_toggled(self, skills_project, extension_dir):
+        """Skills should be cleaned up even if ai_skills is toggled to false after install."""
+        project_dir, skills_dir = skills_project
+        manager = ExtensionManager(project_dir)
+        manifest = manager.install_from_directory(
+            extension_dir, "0.1.0", register_commands=False
+        )
+
+        # Verify skills exist
+        assert (skills_dir / "pdca-test-ext-hello" / "SKILL.md").exists()
+
+        # Toggle ai_skills to false
+        _create_init_options(project_dir, ai="claude", ai_skills=False)
+
+        # Remove should still clean up via fallback scan
+        result = manager.remove(manifest.id, keep_config=False)
+        assert result is True
+        assert not (skills_dir / "pdca-test-ext-hello").exists()
+        assert not (skills_dir / "pdca-test-ext-world").exists()

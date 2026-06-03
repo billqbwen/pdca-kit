@@ -1,0 +1,14 @@
+{
+    "chat.promptFilesRecommendations": {
+        "pdca.constitution": true,
+        "pdca.pdca": true,
+        "pdca.plan": true,
+        "pdca.tasks": true,
+        "pdca.implement": true
+    },
+    "chat.tools.terminal.autoApprove": {
+        ".pdca/scripts/bash/": true,
+        ".pdca/scripts/powershell/": true
+    }
+}
+

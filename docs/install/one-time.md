@@ -1,0 +1,32 @@
+# One-time Usage (uvx)
+
+If you want to try PDCA Kit without installing it permanently, use `uvx` to run it directly. This downloads the tool into a temporary environment that is discarded after the command finishes.
+
+> [!NOTE]
+> The commands below require **[uv](https://docs.astral.sh/uv/)**. If you see `command not found: uvx`, [install uv first](uv.md).
+
+## Run PDCA CLI
+
+```bash
+# Create a new project (latest from main)
+uvx --from git+https://github.com/github/pdca-kit.git pdca init <PROJECT_NAME>
+
+# Or target a specific release (replace vX.Y.Z with a tag from Releases)
+uvx --from git+https://github.com/github/pdca-kit.git@vX.Y.Z pdca init <PROJECT_NAME>
+
+# Initialize in the current directory
+uvx --from git+https://github.com/github/pdca-kit.git pdca init . --integration copilot
+
+# Or use the --here flag
+uvx --from git+https://github.com/github/pdca-kit.git pdca init --here --integration copilot
+```
+
+## When to use persistent installation instead
+
+If you plan to use PDCA Kit regularly, a persistent installation is recommended:
+
+- Tool stays installed and available in PATH
+- No re-download on every invocation
+- Better tool management with `uv tool list`, `uv tool upgrade`, `uv tool uninstall`
+
+See the main [Installation Guide](../installation.md) for persistent installation instructions.
