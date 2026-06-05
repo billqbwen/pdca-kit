@@ -15,7 +15,7 @@ class GateStep(StepBase):
     When running in an interactive terminal, prompts the user to choose
     an option (e.g. approve / reject).  Falls back to ``PAUSED`` when
     stdin is not a TTY (CI, piped input) so the run can be resumed
-    later with ``specify workflow resume``.
+    later with ``pdca workflow resume``.
 
     The user's choice is stored in ``output.choice``.  ``on_reject``
     controls abort / skip behaviour.
@@ -48,7 +48,18 @@ class GateStep(StepBase):
             return StepResult(status=StepStatus.PAUSED, output=output)
 
         # Interactive: prompt the user
-        choice = self._prompt(message, options)
+        try:
+            choice = self._prompt(message, options)
+        except EOFError:
+            output["interrupted"] = True
+            return StepResult(status=StepStatus.PAUSED, output=output)
+        except KeyboardInterrupt:
+            output["aborted"] = True
+            return StepResult(
+                status=StepStatus.FAILED,
+                output=output,
+                error="Gate interrupted by user (Ctrl+C)",
+            )
         output["choice"] = choice
 
         if choice in ("reject", "abort"):
@@ -82,7 +93,7 @@ class GateStep(StepBase):
                 raw = input(f"  Choose [1-{len(options)}]: ").strip()
             except (EOFError, KeyboardInterrupt):
                 print()
-                return options[-1]  # default to last (usually reject)
+                raise
             if raw.isdigit() and 1 <= int(raw) <= len(options):
                 return options[int(raw) - 1]
             # Also accept the option name directly

@@ -1,4 +1,4 @@
-"""specify integration install / uninstall command handlers."""
+"""pdca integration install / uninstall command handlers."""
 from __future__ import annotations
 
 import os
@@ -66,11 +66,11 @@ def integration_install(
         else:
             console.print(
                 f"To make it the default integration, run "
-                f"[cyan]specify integration use {key}[/cyan]."
+                f"[cyan]pdca integration use {key}[/cyan]."
             )
         console.print(
             f"To refresh its managed files or options, run "
-            f"[cyan]specify integration upgrade {key}[/cyan]."
+            f"[cyan]pdca integration upgrade {key}[/cyan]."
         )
         console.print("No files were changed.")
         raise typer.Exit(0)
@@ -93,7 +93,7 @@ def integration_install(
             )
             console.print(
                 f"To replace the default integration, run "
-                f"[cyan]specify integration switch {key}[/cyan]."
+                f"[cyan]pdca integration switch {key}[/cyan]."
             )
             console.print(
                 f"To install '{key}' alongside the existing integrations anyway, "
@@ -257,8 +257,8 @@ def integration_uninstall(
         console.print(f"Manifest: {manifest_path}")
         console.print(
             f"To recover, delete the unreadable manifest, run "
-            f"[cyan]specify integration uninstall {key}[/cyan] to clear stale metadata, "
-            f"then run [cyan]specify integration install {key}[/cyan] to regenerate."
+            f"[cyan]pdca integration uninstall {key}[/cyan] to clear stale metadata, "
+            f"then run [cyan]pdca integration install {key}[/cyan] to regenerate."
         )
         console.print(f"[dim]Details:[/dim] {exc}")
         raise typer.Exit(1)

@@ -21,13 +21,15 @@ Usage:
 
 Or install globally:
     uv tool install --from pdca-cli.py pdca-cli
-    specify init <project-name>
-    specify init .
-    specify init --here
+    pdca init <project-name>
+    pdca init .
+    pdca init --here
 """
 
 import os
+import os
 import sys
+import tempfile
 import zipfile
 import json
 import yaml
@@ -88,7 +90,7 @@ from ._agent_config import (
 )
 
 app = typer.Typer(
-    name="specify",
+    name="pdca",
     help="Setup tool for Specify spec-driven development projects",
     add_completion=False,
     invoke_without_command=True,
@@ -97,7 +99,7 @@ app = typer.Typer(
 
 def _version_callback(value: bool):
     if value:
-        console.print(f"specify {get_pdca_version()}")
+        console.print(f"pdca {get_pdca_version()}")
         raise typer.Exit()
 
 @app.callback()
@@ -108,7 +110,7 @@ def callback(
     """Show banner when no subcommand is provided."""
     if ctx.invoked_subcommand is None and "--help" not in sys.argv and "-h" not in sys.argv:
         show_banner()
-        console.print(Align.center("[dim]Run 'specify --help' for usage information[/dim]"))
+        console.print(Align.center("[dim]Run 'pdca --help' for usage information[/dim]"))
         console.print()
 
 def _refresh_shared_templates(
@@ -263,7 +265,7 @@ INIT_OPTIONS_FILE = ".pdca/init-options.json"
 
 
 def save_init_options(project_path: Path, options: dict[str, Any]) -> None:
-    """Persist the CLI options used during ``specify init``.
+    """Persist the CLI options used during ``pdca init``.
 
     Writes a small JSON file to ``.pdca/init-options.json`` so that
     later operations (e.g. preset install) can adapt their behaviour
@@ -271,32 +273,22 @@ def save_init_options(project_path: Path, options: dict[str, Any]) -> None:
     """
     dest = project_path / INIT_OPTIONS_FILE
     dest.parent.mkdir(parents=True, exist_ok=True)
-    # Write JSON as real UTF-8 instead of ``\uXXXX`` escape sequences
-    # (``ensure_ascii=False``) and pin the file encoding to match.
-    #
-    # The default ``json.dumps`` output is ASCII-only — any non-ASCII
-    # character is encoded as a ``\uXXXX`` escape — so without the
-    # ``ensure_ascii=False`` flip below the encoding pin alone would be
-    # a no-op for any payload we plausibly write today. We pair the two
-    # so the on-disk bytes match a human's expectation of "this file is
-    # UTF-8" (greppable, readable in editors that don't decode JSON
-    # escapes, friendly to peers running ``cat`` or ``Get-Content``) and
-    # so the encoding pin is a real contract instead of a future hedge.
-    #
-    # ``Path.write_text`` without ``encoding=`` falls back to the system
-    # locale codec (cp1252 / gb2312 / cp932 on Windows), which would
-    # mis-encode non-ASCII bytes locally and produce a file a peer with
-    # a different locale couldn't decode. The sibling integration-
-    # catalog writer in ``integrations/catalog.py`` pins
-    # ``encoding="utf-8"`` for the same reason.
-    dest.write_text(
-        json.dumps(options, indent=2, sort_keys=True, ensure_ascii=False),
-        encoding="utf-8",
-    )
+    # Use atomic write so a crash mid-write does not corrupt the file.
+    fd, tmp = tempfile.mkstemp(prefix=f".{dest.name}.", dir=dest.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(
+                json.dumps(options, indent=2, sort_keys=True, ensure_ascii=False)
+            )
+        os.replace(tmp, dest)
+    except BaseException:
+        if Path(tmp).exists():
+            Path(tmp).unlink(missing_ok=True)
+        raise
 
 
 def load_init_options(project_path: Path) -> dict[str, Any]:
-    """Load the init options previously saved by ``specify init``.
+    """Load the init options previously saved by ``pdca init``.
 
     Returns an empty dict if the file does not exist or cannot be parsed.
     """
@@ -314,6 +306,8 @@ def load_init_options(project_path: Path) -> dict[str, Any]:
         # "fall back to empty dict" contract for corrupted / foreign-
         # codec files.
         return json.loads(path.read_text(encoding="utf-8"))
+    except PermissionError:
+        return {}
     except (json.JSONDecodeError, OSError, UnicodeDecodeError):
         return {}
 
@@ -356,7 +350,16 @@ def _save_agent_context_config(
     """Persist *config* to the agent-context extension config file."""
     path = project_root / _AGENT_CTX_EXT_CONFIG
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(yaml.safe_dump(config, default_flow_style=False, sort_keys=False), encoding="utf-8")
+    content = yaml.safe_dump(config, default_flow_style=False, sort_keys=False)
+    fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(content)
+        os.replace(tmp, path)
+    except BaseException:
+        if Path(tmp).exists():
+            Path(tmp).unlink(missing_ok=True)
+        raise
 
 
 def _update_agent_context_config_file(
@@ -480,7 +483,7 @@ def _print_cli_warning(
 # Constants kept for backward compatibility with presets and extensions.
 DEFAULT_SKILLS_DIR = ".agents/skills"
 SKILL_DESCRIPTIONS = {
-    "specify": "Create or update feature specifications from natural language descriptions.",
+    "define": "Create or update feature specifications from natural language descriptions.",
     "plan": "Generate technical implementation plans from feature specifications.",
     "tasks": "Break down implementation plans into actionable task lists.",
     "implement": "Execute all tasks from the task breakdown to build the feature.",
@@ -542,7 +545,7 @@ def check():
     if not any(agent_results.values()):
         console.print("[dim]Tip: Install a coding agent for the best experience[/dim]")
 
-    console.print("[dim]Tip: Run 'specify self check' to verify you have the latest CLI version[/dim]")
+    console.print("[dim]Tip: Run 'pdca self check' to verify you have the latest CLI version[/dim]")
 
 
 def _feature_capabilities() -> dict[str, bool]:
@@ -665,7 +668,7 @@ from .integrations._helpers import (  # noqa: E402
 )
 
 
-def _require_specify_project() -> Path:
+def _require_pdca_project() -> Path:
     """Return the current project root if it is a pdca-kit project, else exit."""
     project_root = Path.cwd()
     if (project_root / ".pdca").is_dir():
@@ -684,14 +687,14 @@ def preset_list():
     """List installed presets."""
     from .presets import PresetManager
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     manager = PresetManager(project_root)
     installed = manager.list_installed()
 
     if not installed:
         console.print("[yellow]No presets installed.[/yellow]")
         console.print("\nInstall a preset with:")
-        console.print("  [cyan]specify preset add <pack-name>[/cyan]")
+        console.print("  [cyan]pdca preset add <pack-name>[/cyan]")
         return
 
     console.print("\n[bold cyan]Installed Presets:[/bold cyan]\n")
@@ -723,7 +726,7 @@ def preset_add(
         PresetCompatibilityError,
     )
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     # Validate priority
     if priority < 1:
         console.print("[red]Error:[/red] Priority must be a positive integer (1 or higher)")
@@ -839,7 +842,7 @@ def preset_remove(
     """Remove an installed preset."""
     from .presets import PresetManager
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     manager = PresetManager(project_root)
 
     if not manager.registry.is_installed(preset_id):
@@ -862,7 +865,7 @@ def preset_search(
     """Search for presets in the catalog."""
     from .presets import PresetCatalog, PresetError
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     catalog = PresetCatalog(project_root)
 
     try:
@@ -892,7 +895,7 @@ def preset_resolve(
     """Show which template will be resolved for a given name."""
     from .presets import PresetResolver
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     resolver = PresetResolver(project_root)
     layers = resolver.collect_all_layers(template_name)
 
@@ -956,7 +959,7 @@ def preset_info(
     from .extensions import normalize_priority
     from .presets import PresetCatalog, PresetManager, PresetError
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     # Check if installed locally first
     manager = PresetManager(project_root)
     local_pack = manager.get_pack(preset_id)
@@ -1011,7 +1014,7 @@ def preset_info(
     if pack_info.get("license"):
         console.print(f"  License:     {pack_info['license']}")
     console.print("\n  [yellow]Status: not installed[/yellow]")
-    console.print(f"  Install with: [cyan]specify preset add {preset_id}[/cyan]")
+    console.print(f"  Install with: [cyan]pdca preset add {preset_id}[/cyan]")
     console.print()
 
 
@@ -1023,7 +1026,7 @@ def preset_set_priority(
     """Set the resolution priority of an installed preset."""
     from .presets import PresetManager
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     # Validate priority
     if priority < 1:
         console.print("[red]Error:[/red] Priority must be a positive integer (1 or higher)")
@@ -1066,7 +1069,7 @@ def preset_enable(
     """Enable a disabled preset."""
     from .presets import PresetManager
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     manager = PresetManager(project_root)
 
     # Check if preset is installed
@@ -1099,7 +1102,7 @@ def preset_disable(
     """Disable a preset without removing it."""
     from .presets import PresetManager
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     manager = PresetManager(project_root)
 
     # Check if preset is installed
@@ -1123,7 +1126,7 @@ def preset_disable(
     console.print(f"[green]✓[/green] Preset '{preset_id}' disabled")
     console.print("\nTemplates from this preset will be skipped during resolution.")
     console.print("[dim]Note: Previously registered commands/skills remain active until preset removal.[/dim]")
-    console.print(f"To re-enable: specify preset enable {preset_id}")
+    console.print(f"To re-enable: pdca preset enable {preset_id}")
 
 
 # ===== Preset Catalog Commands =====
@@ -1134,7 +1137,7 @@ def preset_catalog_list():
     """List all active preset catalogs."""
     from .presets import PresetCatalog, PresetValidationError
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     catalog = PresetCatalog(project_root)
 
     try:
@@ -1196,8 +1199,8 @@ def preset_catalog_add(
     """Add a catalog to .pdca/preset-catalogs.yml."""
     from .presets import PresetCatalog, PresetValidationError
 
-    project_root = _require_specify_project()
-    specify_dir = project_root / ".pdca"
+    project_root = _require_pdca_project()
+    pdca_dir = project_root / ".pdca"
 
     # Validate URL
     tmp_catalog = PresetCatalog(project_root)
@@ -1207,7 +1210,7 @@ def preset_catalog_add(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1)
 
-    config_path = specify_dir / "preset-catalogs.yml"
+    config_path = pdca_dir / "preset-catalogs.yml"
 
     # Load existing config
     if config_path.exists():
@@ -1229,7 +1232,7 @@ def preset_catalog_add(
     for existing in catalogs:
         if isinstance(existing, dict) and existing.get("name") == name:
             console.print(f"[yellow]Warning:[/yellow] A catalog named '{name}' already exists.")
-            console.print("Use 'specify preset catalog remove' first, or choose a different name.")
+            console.print("Use 'pdca preset catalog remove' first, or choose a different name.")
             raise typer.Exit(1)
 
     catalogs.append({
@@ -1255,10 +1258,10 @@ def preset_catalog_remove(
     name: str = typer.Argument(help="Catalog name to remove"),
 ):
     """Remove a catalog from .pdca/preset-catalogs.yml."""
-    project_root = _require_specify_project()
-    specify_dir = project_root / ".pdca"
+    project_root = _require_pdca_project()
+    pdca_dir = project_root / ".pdca"
 
-    config_path = specify_dir / "preset-catalogs.yml"
+    config_path = pdca_dir / "preset-catalogs.yml"
     if not config_path.exists():
         console.print("[red]Error:[/red] No preset catalog config found. Nothing to remove.")
         raise typer.Exit(1)
@@ -1338,7 +1341,7 @@ def _resolve_installed_extension(
             table.add_row(ext.get("id", ""), ext.get("name", ""), str(ext.get("version", "")))
         console.print(table)
         console.print("\nPlease rerun using the extension ID:")
-        console.print(f"  [bold]specify extension {command_name} <extension-id>[/bold]")
+        console.print(f"  [bold]pdca extension {command_name} <extension-id>[/bold]")
         raise typer.Exit(1)
     else:
         # No match by ID or display name
@@ -1401,7 +1404,7 @@ def _resolve_catalog_extension(
                 )
             console.print(table)
             console.print("\nPlease rerun using the extension ID:")
-            console.print(f"  [bold]specify extension {command_name} <extension-id>[/bold]")
+            console.print(f"  [bold]pdca extension {command_name} <extension-id>[/bold]")
             raise typer.Exit(1)
 
         # Not found
@@ -1419,14 +1422,14 @@ def extension_list(
     """List installed extensions."""
     from .extensions import ExtensionManager
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     manager = ExtensionManager(project_root)
     installed = manager.list_installed()
 
     if not installed and not (available or all_extensions):
         console.print("[yellow]No extensions installed.[/yellow]")
         console.print("\nInstall an extension with:")
-        console.print("  specify extension add <extension-name>")
+        console.print("  pdca extension add <extension-name>")
         return
 
     if installed:
@@ -1444,7 +1447,7 @@ def extension_list(
 
     if available or all_extensions:
         console.print("\nInstall an extension:")
-        console.print("  [cyan]specify extension add <name>[/cyan]")
+        console.print("  [cyan]pdca extension add <name>[/cyan]")
 
 
 @catalog_app.command("list")
@@ -1452,7 +1455,7 @@ def catalog_list():
     """List all active extension catalogs."""
     from .extensions import ExtensionCatalog, ValidationError
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     catalog = ExtensionCatalog(project_root)
 
     try:
@@ -1514,8 +1517,8 @@ def catalog_add(
     """Add a catalog to .pdca/extension-catalogs.yml."""
     from .extensions import ExtensionCatalog, ValidationError
 
-    project_root = _require_specify_project()
-    specify_dir = project_root / ".pdca"
+    project_root = _require_pdca_project()
+    pdca_dir = project_root / ".pdca"
 
     # Validate URL
     tmp_catalog = ExtensionCatalog(project_root)
@@ -1525,7 +1528,7 @@ def catalog_add(
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1)
 
-    config_path = specify_dir / "extension-catalogs.yml"
+    config_path = pdca_dir / "extension-catalogs.yml"
 
     # Load existing config
     if config_path.exists():
@@ -1547,7 +1550,7 @@ def catalog_add(
     for existing in catalogs:
         if isinstance(existing, dict) and existing.get("name") == name:
             console.print(f"[yellow]Warning:[/yellow] A catalog named '{name}' already exists.")
-            console.print("Use 'specify extension catalog remove' first, or choose a different name.")
+            console.print("Use 'pdca extension catalog remove' first, or choose a different name.")
             raise typer.Exit(1)
 
     catalogs.append({
@@ -1573,10 +1576,10 @@ def catalog_remove(
     name: str = typer.Argument(help="Catalog name to remove"),
 ):
     """Remove a catalog from .pdca/extension-catalogs.yml."""
-    project_root = _require_specify_project()
-    specify_dir = project_root / ".pdca"
+    project_root = _require_pdca_project()
+    pdca_dir = project_root / ".pdca"
 
-    config_path = specify_dir / "extension-catalogs.yml"
+    config_path = pdca_dir / "extension-catalogs.yml"
     if not config_path.exists():
         console.print("[red]Error:[/red] No catalog config found. Nothing to remove.")
         raise typer.Exit(1)
@@ -1616,7 +1619,7 @@ def extension_add(
     """Install an extension."""
     from .extensions import ExtensionManager, ExtensionCatalog, ExtensionError, ValidationError, CompatibilityError, REINSTALL_COMMAND
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     # Validate priority
     if priority < 1:
         console.print("[red]Error:[/red] Priority must be a positive integer (1 or higher)")
@@ -1727,7 +1730,7 @@ def extension_add(
                     if not ext_info:
                         console.print(f"[red]Error:[/red] Extension '{extension}' not found in catalog")
                         console.print("\nSearch available extensions:")
-                        console.print("  specify extension search")
+                        console.print("  pdca extension search")
                         raise typer.Exit(1)
 
                     # If catalog resolved a display name to an ID, check bundled again
@@ -1828,7 +1831,7 @@ def extension_remove(
     """Uninstall an extension."""
     from .extensions import ExtensionManager
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     manager = ExtensionManager(project_root)
 
     # Resolve extension ID from argument (handles ambiguous names)
@@ -1880,7 +1883,7 @@ def extension_remove(
             console.print(f"\nConfig files preserved in .pdca/extensions/{extension_id}/")
         else:
             console.print(f"\nConfig files backed up to .pdca/extensions/.backup/{extension_id}/")
-        console.print(f"\nTo reinstall: specify extension add {extension_id}")
+        console.print(f"\nTo reinstall: pdca extension add {extension_id}")
     else:
         console.print("[red]Error:[/red] Failed to remove extension")
         raise typer.Exit(1)
@@ -1896,7 +1899,7 @@ def extension_search(
     """Search for available extensions in catalog."""
     from .extensions import ExtensionCatalog, ExtensionError
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     catalog = ExtensionCatalog(project_root)
 
     try:
@@ -1909,7 +1912,7 @@ def extension_search(
                 console.print("\nTry:")
                 console.print("  • Broader search terms")
                 console.print("  • Remove filters")
-                console.print("  • specify extension search (show all)")
+                console.print("  • pdca extension search (show all)")
             raise typer.Exit(0)
 
         console.print(f"\n[green]Found {len(results)} extension(s):[/green]\n")
@@ -1950,12 +1953,12 @@ def extension_search(
 
             # Install command (show warning if not installable)
             if install_allowed:
-                console.print(f"\n  [cyan]Install:[/cyan] specify extension add {ext['id']}")
+                console.print(f"\n  [cyan]Install:[/cyan] pdca extension add {ext['id']}")
             else:
                 console.print(f"\n  [yellow]⚠[/yellow]  Not directly installable from '{catalog_name}'.")
                 console.print(
                     f"  Add to an approved catalog with install_allowed: true, "
-                    f"or install from a ZIP URL: specify extension add {ext['id']} --from <zip-url>"
+                    f"or install from a ZIP URL: pdca extension add {ext['id']} --from <zip-url>"
                 )
             console.print()
 
@@ -1972,7 +1975,7 @@ def extension_info(
     """Show detailed information about an extension."""
     from .extensions import ExtensionCatalog, ExtensionManager, normalize_priority
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     catalog = ExtensionCatalog(project_root)
     manager = ExtensionManager(project_root)
     installed = manager.list_installed()
@@ -2037,7 +2040,7 @@ def extension_info(
         console.print("[green]✓ Installed[/green]")
         priority = normalize_priority(metadata.get("priority") if metadata_is_dict else None)
         console.print(f"[dim]Priority:[/dim] {priority}")
-        console.print(f"\nTo remove: specify extension remove {resolved_installed_id}")
+        console.print(f"\nTo remove: pdca extension remove {resolved_installed_id}")
         return
 
     # Case 3: Not found anywhere
@@ -2046,7 +2049,7 @@ def extension_info(
         console.print("\nTry again when online, or use the extension ID directly.")
     else:
         console.print(f"[red]Error:[/red] Extension '{extension}' not found")
-        console.print("\nTry: specify extension search")
+        console.print("\nTry: pdca extension search")
     raise typer.Exit(1)
 
 
@@ -2135,10 +2138,10 @@ def _print_extension_info(ext_info: dict, manager):
         metadata = manager.registry.get(ext_info['id'])
         priority = normalize_priority(metadata.get("priority") if isinstance(metadata, dict) else None)
         console.print(f"[dim]Priority:[/dim] {priority}")
-        console.print(f"\nTo remove: specify extension remove {ext_info['id']}")
+        console.print(f"\nTo remove: pdca extension remove {ext_info['id']}")
     elif install_allowed:
         console.print("[yellow]Not installed[/yellow]")
-        console.print(f"\n[cyan]Install:[/cyan] specify extension add {ext_info['id']}")
+        console.print(f"\n[cyan]Install:[/cyan] pdca extension add {ext_info['id']}")
     else:
         catalog_name = ext_info.get("_catalog_name", "community")
         console.print("[yellow]Not installed[/yellow]")
@@ -2166,7 +2169,7 @@ def extension_update(
     from packaging import version as pkg_version
     import shutil
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     manager = ExtensionManager(project_root)
     catalog = ExtensionCatalog(project_root)
     pdca_version = get_pdca_version()
@@ -2584,7 +2587,7 @@ def extension_enable(
     """Enable a disabled extension."""
     from .extensions import ExtensionManager, HookExecutor
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     manager = ExtensionManager(project_root)
     hook_executor = HookExecutor(project_root)
 
@@ -2623,7 +2626,7 @@ def extension_disable(
     """Disable an extension without removing it."""
     from .extensions import ExtensionManager, HookExecutor
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     manager = ExtensionManager(project_root)
     hook_executor = HookExecutor(project_root)
 
@@ -2654,7 +2657,7 @@ def extension_disable(
 
     console.print(f"[green]✓[/green] Extension '{display_name}' disabled")
     console.print("\nCommands will no longer be available. Hooks will not execute.")
-    console.print(f"To re-enable: specify extension enable {extension_id}")
+    console.print(f"To re-enable: pdca extension enable {extension_id}")
 
 
 @extension_app.command("set-priority")
@@ -2665,7 +2668,7 @@ def extension_set_priority(
     """Set the resolution priority of an installed extension."""
     from .extensions import ExtensionManager
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     # Validate priority
     if priority < 1:
         console.print("[red]Error:[/red] Priority must be a positive integer (1 or higher)")
@@ -2727,7 +2730,7 @@ def workflow_run(
     """Run a workflow from an installed ID or local YAML path."""
     from .workflows.engine import WorkflowEngine
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     engine = WorkflowEngine(project_root)
     engine.on_step_start = lambda sid, label: console.print(f"  \u25b8 [{sid}] {label} \u2026")
 
@@ -2781,7 +2784,7 @@ def workflow_run(
     console.print(f"[dim]Run ID: {state.run_id}[/dim]")
 
     if state.status.value == "paused":
-        console.print(f"\nResume with: [cyan]specify workflow resume {state.run_id}[/cyan]")
+        console.print(f"\nResume with: [cyan]pdca workflow resume {state.run_id}[/cyan]")
 
 
 @workflow_app.command("resume")
@@ -2791,7 +2794,7 @@ def workflow_resume(
     """Resume a paused or failed workflow run."""
     from .workflows.engine import WorkflowEngine
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     engine = WorkflowEngine(project_root)
     engine.on_step_start = lambda sid, label: console.print(f"  \u25b8 [{sid}] {label} \u2026")
 
@@ -2824,7 +2827,7 @@ def workflow_status(
     """Show workflow run status."""
     from .workflows.engine import WorkflowEngine
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     engine = WorkflowEngine(project_root)
 
     if run_id:
@@ -2883,14 +2886,14 @@ def workflow_list():
     """List installed workflows."""
     from .workflows.catalog import WorkflowRegistry
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     registry = WorkflowRegistry(project_root)
     installed = registry.list()
 
     if not installed:
         console.print("[yellow]No workflows installed.[/yellow]")
         console.print("\nInstall a workflow with:")
-        console.print("  [cyan]specify workflow add <workflow-id>[/cyan]")
+        console.print("  [cyan]pdca workflow add <workflow-id>[/cyan]")
         return
 
     console.print("\n[bold cyan]Installed Workflows:[/bold cyan]\n")
@@ -2910,7 +2913,7 @@ def workflow_add(
     from .workflows.catalog import WorkflowCatalog, WorkflowRegistry, WorkflowCatalogError
     from .workflows.engine import WorkflowDefinition
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     registry = WorkflowRegistry(project_root)
     workflows_dir = project_root / ".pdca" / "workflows"
 
@@ -3141,7 +3144,7 @@ def workflow_remove(
     """Uninstall a workflow."""
     from .workflows.catalog import WorkflowRegistry
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     registry = WorkflowRegistry(project_root)
 
     if not registry.is_installed(workflow_id):
@@ -3166,7 +3169,7 @@ def workflow_search(
     """Search workflow catalogs."""
     from .workflows.catalog import WorkflowCatalog, WorkflowCatalogError
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     catalog = WorkflowCatalog(project_root)
 
     try:
@@ -3199,7 +3202,7 @@ def workflow_info(
     from .workflows.catalog import WorkflowCatalog, WorkflowRegistry, WorkflowCatalogError
     from .workflows.engine import WorkflowEngine
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
 
     # Check installed first
     registry = WorkflowRegistry(project_root)
@@ -3266,7 +3269,7 @@ def workflow_catalog_list():
     """List configured workflow catalog sources."""
     from .workflows.catalog import WorkflowCatalog, WorkflowCatalogError
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     catalog = WorkflowCatalog(project_root)
 
     try:
@@ -3293,7 +3296,7 @@ def workflow_catalog_add(
     """Add a workflow catalog source."""
     from .workflows.catalog import WorkflowCatalog, WorkflowValidationError
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     catalog = WorkflowCatalog(project_root)
     try:
         catalog.add_catalog(url, name)
@@ -3311,7 +3314,7 @@ def workflow_catalog_remove(
     """Remove a workflow catalog source by index."""
     from .workflows.catalog import WorkflowCatalog, WorkflowValidationError
 
-    project_root = _require_specify_project()
+    project_root = _require_pdca_project()
     catalog = WorkflowCatalog(project_root)
     try:
         removed_name = catalog.remove_catalog(index)

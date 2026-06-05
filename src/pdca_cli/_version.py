@@ -25,7 +25,7 @@ def _get_installed_version() -> str:
 
     Uses importlib.metadata so the value reflects what was actually installed
     by pip/uv/pipx — not a value read from pyproject.toml. This is
-    intentional for `specify self check`, which should reason about the
+    intentional for `pdca self check`, which should reason about the
     installed distribution rather than a source-tree fallback. Callers must
     treat the sentinel string 'unknown' as an indeterminate value (see FR-020).
     """
@@ -103,7 +103,7 @@ def _fetch_latest_release_tag() -> tuple[str | None, str | None]:
 
 self_app = typer.Typer(
     name="self",
-    help="Manage the specify CLI itself (read-only check and reserved upgrade command).",
+    help="Manage the pdca CLI itself (read-only check and reserved upgrade command).",
     add_completion=False,
 )
 
@@ -113,10 +113,10 @@ def self_check() -> None:
     """Check whether a newer pdca-cli release is available. Read-only.
 
     This command only checks for updates; it does not modify your installation.
-    The reserved (and currently non-destructive) `specify self upgrade` command
+    The reserved (and currently non-destructive) `pdca self upgrade` command
     is the name that a future release will use for actual self-upgrade — its
     behavior is not implemented in this release and is intentionally out of
-    scope here. See `specify self upgrade --help` for its current status.
+    scope here. See `pdca self upgrade --help` for its current status.
     """
     installed = _get_installed_version()
     tag, failure_reason = _fetch_latest_release_tag()
@@ -165,9 +165,9 @@ def self_upgrade() -> None:
     invokes no installer. It prints a three-line guidance message and exits 0.
     Actual self-upgrade is planned as follow-up work.
 
-    Use `specify self check` today to see whether a newer release is available
+    Use `pdca self check` today to see whether a newer release is available
     and to get a copy-pasteable reinstall command.
     """
-    console.print("specify self upgrade is not implemented yet.")
-    console.print("Run 'specify self check' to see whether a newer release is available.")
+    console.print("pdca self upgrade is not implemented yet.")
+    console.print("Run 'pdca self check' to see whether a newer release is available.")
     console.print("Actual self-upgrade is planned as follow-up work.")

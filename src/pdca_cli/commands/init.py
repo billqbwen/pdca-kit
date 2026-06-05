@@ -1,4 +1,4 @@
-"""specify init command."""
+"""pdca init command."""
 from __future__ import annotations
 
 import os
@@ -115,7 +115,7 @@ def register(app: typer.Typer) -> None:
         integration_options: str = typer.Option(None, "--integration-options", help='Options for the integration (e.g. --integration-options="--commands-dir .myagent/cmds")'),
     ):
         """
-        Initialize a new Specify project.
+        Initialize a new PDCA project.
 
         Project files are scaffolded from assets bundled inside the pdca-cli
         package, so initialization does not need network access and templates
@@ -131,22 +131,22 @@ def register(app: typer.Typer) -> None:
         5. Set up coding agent integration commands and optional presets
 
         Examples:
-            specify init my-project
-            specify init my-project --integration claude
-            specify init my-project --integration copilot --no-git
-            specify init --ignore-agent-tools my-project
-            specify init . --integration claude         # Initialize in current directory
-            specify init .                     # Initialize in current directory (interactive integration selection)
-            specify init --here --integration claude    # Alternative syntax for current directory
-            specify init --here --integration codex --integration-options="--skills"
-            specify init --here --integration codebuddy
-            specify init --here --integration vibe      # Initialize with Mistral Vibe support
-            specify init --here
-            specify init --here --force  # Skip confirmation when current directory not empty
-            specify init my-project --integration claude   # Claude installs skills by default
-            specify init --here --integration gemini
-            specify init my-project --integration generic --integration-options="--commands-dir .myagent/commands/"  # Bring your own agent; requires --commands-dir
-            specify init my-project --integration claude --preset healthcare-compliance  # With preset
+            pdca init my-project
+            pdca init my-project --integration claude
+            pdca init my-project --integration copilot --no-git
+            pdca init --ignore-agent-tools my-project
+            pdca init . --integration claude         # Initialize in current directory
+            pdca init .                     # Initialize in current directory (interactive integration selection)
+            pdca init --here --integration claude    # Alternative syntax for current directory
+            pdca init --here --integration codex --integration-options="--skills"
+            pdca init --here --integration codebuddy
+            pdca init --here --integration vibe      # Initialize with Mistral Vibe support
+            pdca init --here
+            pdca init --here --force  # Skip confirmation when current directory not empty
+            pdca init my-project --integration claude   # Claude installs skills by default
+            pdca init --here --integration gemini
+            pdca init my-project --integration generic --integration-options="--commands-dir .myagent/commands/"  # Bring your own agent; requires --commands-dir
+            pdca init my-project --integration claude --preset healthcare-compliance  # With preset
         """
         # Lazy imports to avoid circular dependency — __init__.py imports this module
         from .. import (
@@ -168,14 +168,14 @@ def register(app: typer.Typer) -> None:
         if ai_assistant and ai_assistant.startswith("--"):
             console.print(f"[red]Error:[/red] Invalid value for --ai: '{ai_assistant}'")
             console.print("[yellow]Hint:[/yellow] Did you forget to provide a value for --ai?")
-            console.print("[yellow]Example:[/yellow] specify init --integration claude --here")
+            console.print("[yellow]Example:[/yellow] pdca init --integration claude --here")
             console.print(f"[yellow]Available agents:[/yellow] {', '.join(AGENT_CONFIG.keys())}")
             raise typer.Exit(1)
 
         if ai_commands_dir and ai_commands_dir.startswith("--"):
             console.print(f"[red]Error:[/red] Invalid value for --ai-commands-dir: '{ai_commands_dir}'")
             console.print("[yellow]Hint:[/yellow] Did you forget to provide a value for --ai-commands-dir?")
-            console.print("[yellow]Example:[/yellow] specify init --integration generic --integration-options=\"--commands-dir .myagent/commands/\"")
+            console.print("[yellow]Example:[/yellow] pdca init --integration generic --integration-options=\"--commands-dir .myagent/commands/\"")
             raise typer.Exit(1)
 
         if ai_assistant:
@@ -227,7 +227,7 @@ def register(app: typer.Typer) -> None:
             console.print(
                 "[yellow]⚠️  --no-git is deprecated and will be removed in v0.10.0.[/yellow]\n"
                 "[yellow]The git extension will no longer be enabled by default "
-                "— use the [bold]specify extension[/bold] commands to install or enable the git extension if needed.[/yellow]"
+                "— use the [bold]pdca extension[/bold] commands to install or enable the git extension if needed.[/yellow]"
             )
 
         if project_name == ".":
@@ -244,7 +244,7 @@ def register(app: typer.Typer) -> None:
 
         if ai_skills and not ai_assistant:
             console.print("[red]Error:[/red] --ai-skills requires --ai to be specified")
-            console.print("[yellow]Usage:[/yellow] specify init <project> --ai <agent> --ai-skills")
+            console.print("[yellow]Usage:[/yellow] pdca init <project> --ai <agent> --ai-skills")
             raise typer.Exit(1)
 
         BRANCH_NUMBERING_CHOICES = {"sequential", "timestamp"}
@@ -323,13 +323,13 @@ def register(app: typer.Typer) -> None:
         if selected_ai == "generic" and not integration_options:
             if not ai_commands_dir:
                 console.print("[red]Error:[/red] --ai-commands-dir is required when using --ai generic or --integration generic")
-                console.print('[dim]Example: specify init my-project --integration generic --integration-options="--commands-dir .myagent/commands/"[/dim]')
+                console.print('[dim]Example: pdca init my-project --integration generic --integration-options="--commands-dir .myagent/commands/"[/dim]')
                 raise typer.Exit(1)
 
         current_dir = Path.cwd()
 
         setup_lines = [
-            "[cyan]Specify Project Setup[/cyan]",
+            "[cyan]PDCA Project Setup[/cyan]",
             "",
             f"{'Project':<15} [green]{project_path.name}[/green]",
             f"{'Working Path':<15} [dim]{current_dir}[/dim]",
@@ -380,7 +380,7 @@ def register(app: typer.Typer) -> None:
         console.print(f"[cyan]Selected coding agent integration:[/cyan] {selected_ai}")
         console.print(f"[cyan]Selected script type:[/cyan] {selected_script}")
 
-        tracker = StepTracker("Initialize Specify Project")
+        tracker = StepTracker("Initialize PDCA Project")
 
         tracker.add("precheck", "Check required tools")
         tracker.complete("precheck", "ok")
@@ -422,6 +422,11 @@ def register(app: typer.Typer) -> None:
                     extra = _parse_integration_options(resolved_integration, integration_options)
                     if extra:
                         integration_parsed_options.update(extra)
+
+                if selected_ai == "generic" and "commands_dir" not in integration_parsed_options:
+                    console.print("[red]Error:[/red] --commands-dir is required when using the generic integration.")
+                    console.print('[dim]Example: pdca init my-project --integration generic --integration-options="--commands-dir .myagent/commands/"[/dim]')
+                    raise typer.Exit(1)
 
                 resolved_integration.setup(
                     project_path, manifest,
@@ -665,7 +670,10 @@ def register(app: typer.Typer) -> None:
                     env_lines = [f"{k.ljust(_label_width)} → [bright_black]{v}[/bright_black]" for k, v in _env_pairs]
                     console.print(Panel("\n".join(env_lines), title="Debug Environment", border_style="magenta"))
                 if not here and project_path.exists() and not dir_existed_before:
-                    shutil.rmtree(project_path)
+                    try:
+                        shutil.rmtree(project_path)
+                    except OSError as cleanup_err:
+                        console.print(f"[yellow]Warning: could not clean up partial project directory: {cleanup_err}[/yellow]")
                 raise typer.Exit(1)
             finally:
                 pass
@@ -699,9 +707,9 @@ def register(app: typer.Typer) -> None:
 
         if git_default_notice:
             default_change_notice = Panel(
-                "The git extension is currently enabled by default during [bold]specify init[/bold].\n"
+                "The git extension is currently enabled by default during [bold]pdca init[/bold].\n"
                 "Starting in [bold]v0.10.0[/bold], this will require explicit opt-in.\n"
-                "Use [bold]specify extension add git[/bold] after init when needed.",
+                "Use [bold]pdca extension add git[/bold] after init when needed.",
                 title="[yellow]Notice: Git Default Changing[/yellow]",
                 border_style="yellow",
                 padding=(1, 2),

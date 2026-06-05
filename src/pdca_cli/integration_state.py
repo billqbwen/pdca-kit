@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -220,4 +222,12 @@ def write_integration_json(
         data["integration"] = integration_key
         data["default_integration"] = integration_key
 
-    dest.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    fd, tmp = tempfile.mkstemp(prefix=f".{dest.name}.", dir=dest.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(json.dumps(data, indent=2) + "\n")
+        os.replace(tmp, dest)
+    except BaseException:
+        if Path(tmp).exists():
+            Path(tmp).unlink(missing_ok=True)
+        raise

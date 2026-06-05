@@ -20,7 +20,7 @@ class SymlinkedSharedPathError(ValueError):
     """
 
 
-def load_pdca.manifest(
+def load_pdca_manifest(
     project_path: Path,
     *,
     version: str,
@@ -209,7 +209,7 @@ def refresh_shared_templates(
     if not templates_src.is_dir():
         return
 
-    manifest = load_pdca.manifest(project_path, version=version, console=console)
+    manifest = load_pdca_manifest(project_path, version=version, console=console)
     tracked_files = manifest.files
     modified = set(manifest.check_modified())
     skipped_files: list[str] = []
@@ -274,7 +274,7 @@ def install_shared_infra(
     """
     from .integrations.manifest import _sha256
 
-    manifest = load_pdca.manifest(project_path, version=version, console=console)
+    manifest = load_pdca_manifest(project_path, version=version, console=console)
     prior_hashes = dict(manifest.files)
 
     def _is_managed(rel: str, dst: Path) -> bool:
@@ -459,8 +459,8 @@ def install_shared_infra(
         else:
             console.print(
                 "To refresh shared infrastructure, run "
-                "[cyan]specify init --here --force[/cyan] or "
-                "[cyan]specify integration upgrade --force[/cyan]."
+                "[cyan]pdca init --here --force[/cyan] or "
+                "[cyan]pdca integration upgrade --force[/cyan]."
             )
 
     if symlinked_files:

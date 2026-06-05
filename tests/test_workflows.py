@@ -210,7 +210,7 @@ class TestExpressions:
         from pdca_cli.workflows.base import StepContext
 
         ctx = StepContext(
-            steps={"specify": {"output": {"file": "spec.md"}}}
+            steps={"define": {"output": {"file": "spec.md"}}}
         )
         assert evaluate_expression("{{ steps.define.output.file }}", ctx) == "spec.md"
 

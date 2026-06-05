@@ -1,4 +1,4 @@
-"""specify integration helpers — internal utilities shared across command modules."""
+"""pdca integration helpers — internal utilities shared across command modules."""
 from __future__ import annotations
 
 import os

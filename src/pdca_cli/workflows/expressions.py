@@ -7,6 +7,7 @@ No file I/O, no imports, no arbitrary code execution.
 from __future__ import annotations
 
 import re
+import sys
 from typing import Any
 
 
@@ -66,27 +67,48 @@ def _resolve_dot_path(obj: Any, path: str) -> Any:
     """Resolve a dotted path like ``steps.define.output.file`` against *obj*.
 
     Supports dict key access and list indexing (e.g., ``task_list[0]``).
+    Returns ``None`` for missing keys (with a diagnostic message to stderr).
     """
     parts = path.split(".")
     current = obj
-    for part in parts:
+    for i, part in enumerate(parts):
         # Handle list indexing: name[0]
         idx_match = re.match(r"^([\w-]+)\[(\d+)\]$", part)
         if idx_match:
             key, idx = idx_match.group(1), int(idx_match.group(2))
-            if isinstance(current, dict):
-                current = current.get(key)
+            if isinstance(current, dict) and key in current:
+                current = current[key]
             else:
+                if isinstance(current, dict) and key not in current:
+                    resolved = ".".join(parts[: i + 1])
+                    print(
+                        f"[warn] Expression path {resolved!r} not found "
+                        f"(key {key!r} missing from context)",
+                        file=sys.stderr,
+                    )
                 return None
             if isinstance(current, list) and 0 <= idx < len(current):
                 current = current[idx]
             else:
                 return None
         elif isinstance(current, dict):
-            current = current.get(part)
+            if part in current:
+                current = current[part]
+            else:
+                resolved = ".".join(parts[: i + 1])
+                print(
+                    f"[warn] Expression path {resolved!r} not found "
+                    f"(key {part!r} missing from context)",
+                    file=sys.stderr,
+                )
+                return None
         else:
-            return None
-        if current is None:
+            resolved = ".".join(parts[: i + 1])
+            print(
+                f"[warn] Expression path {resolved!r} not found "
+                f"(intermediate value is not a dict)",
+                file=sys.stderr,
+            )
             return None
     return current
 
@@ -218,38 +240,86 @@ def _evaluate_simple_expression(expr: str, namespace: dict[str, Any]) -> Any:
     if expr.lower() in ("none", "null"):
         return None
 
-    # List literal (simple)
+    # List literal (bracket-aware split to handle nested structures)
     if expr.startswith("[") and expr.endswith("]"):
         inner = expr[1:-1].strip()
         if not inner:
             return []
-        items = [_evaluate_simple_expression(i.strip(), namespace) for i in inner.split(",")]
-        return items
+        items = []
+        depth = 0
+        in_quote = None
+        current: list[str] = []
+        for ch in inner:
+            if ch in ("'", '"') and in_quote is None:
+                in_quote = ch
+                current.append(ch)
+            elif ch == in_quote and in_quote is not None:
+                in_quote = None
+                current.append(ch)
+            elif ch in ("[", "(", "{") and in_quote is None:
+                depth += 1
+                current.append(ch)
+            elif ch in ("]", ")", "}") and in_quote is None:
+                depth -= 1
+                current.append(ch)
+            elif ch == "," and depth == 0 and in_quote is None:
+                items.append("".join(current).strip())
+                current = []
+            else:
+                current.append(ch)
+        items.append("".join(current).strip())
+        return [_evaluate_simple_expression(i, namespace) for i in items if i]
 
     # Variable reference (dot-path)
     return _resolve_dot_path(namespace, expr)
 
 
 def _safe_compare(left: Any, right: Any, op: str) -> bool:
-    """Safely compare two values, coercing types when possible."""
-    try:
-        if isinstance(left, str):
-            left = float(left) if "." in left else int(left)
-        if isinstance(right, str):
-            right = float(right) if "." in right else int(right)
-    except (ValueError, TypeError):
-        return False
-    try:
+    """Safely compare two values, coercing to numbers when possible.
+
+    Falls back to lexicographic string comparison when both sides are
+    strings that cannot be parsed as numbers.
+    """
+    # Try numeric coercion for strings first
+    def _try_numeric(v: Any) -> tuple[bool, Any]:
+        if isinstance(v, str):
+            try:
+                return True, int(v)
+            except (ValueError, TypeError):
+                try:
+                    return True, float(v)
+                except (ValueError, TypeError):
+                    return False, v
+        return True, v
+
+    left_num, left_val = _try_numeric(left)
+    right_num, right_val = _try_numeric(right)
+
+    # Both numeric: compare as numbers
+    if left_num and right_num:
+        try:
+            if op == ">":
+                return left_val > right_val  # type: ignore[operator]
+            if op == "<":
+                return left_val < right_val  # type: ignore[operator]
+            if op == ">=":
+                return left_val >= right_val  # type: ignore[operator]
+            if op == "<=":
+                return left_val <= right_val  # type: ignore[operator]
+        except TypeError:
+            pass
+
+    # Both strings: fall back to lexicographic comparison
+    if isinstance(left_val, str) and isinstance(right_val, str):
         if op == ">":
-            return left > right  # type: ignore[operator]
+            return left_val > right_val
         if op == "<":
-            return left < right  # type: ignore[operator]
+            return left_val < right_val
         if op == ">=":
-            return left >= right  # type: ignore[operator]
+            return left_val >= right_val
         if op == "<=":
-            return left <= right  # type: ignore[operator]
-    except TypeError:
-        return False
+            return left_val <= right_val
+
     return False
 
 
@@ -302,8 +372,8 @@ def evaluate_condition(condition: str, context: Any) -> bool:
     # condition: "false" (without {{ }}) behaves as expected.
     if isinstance(result, str):
         lower = result.lower()
-        if lower == "false":
+        if lower in ("false", "0", "no", "off"):
             return False
-        if lower == "true":
+        if lower in ("true", "1", "yes", "on"):
             return True
     return bool(result)

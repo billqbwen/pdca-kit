@@ -396,9 +396,9 @@ class IntegrationManifest:
         path = inst.manifest_path
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
             raise ValueError(
-                f"Integration manifest at {path} contains invalid JSON"
+                f"Integration manifest at {path} contains invalid JSON or encoding"
             ) from exc
 
         if not isinstance(data, dict):

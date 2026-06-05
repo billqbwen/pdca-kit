@@ -6,8 +6,8 @@ AI agent framework by Nous Research.  It stores skills in
 
 Usage::
 
-    specify init my-project --integration hermes
-    specify init --here --ai hermes
+    pdca init my-project --integration hermes
+    pdca init --here --ai hermes
 """
 
 from __future__ import annotations
@@ -210,7 +210,7 @@ class HermesIntegration(SkillsIntegration):
 
         Global skills are always removed on teardown — this matches the
         standard integration behaviour where all files created by the
-        integration are removed on ``specify integration uninstall``.
+        integration are removed on ``pdca integration uninstall``.
         """
         # Remove managed context section from AGENTS.md
         self.remove_context_section(project_root)

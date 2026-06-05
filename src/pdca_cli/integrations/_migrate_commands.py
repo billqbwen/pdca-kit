@@ -1,4 +1,4 @@
-"""specify integration switch / upgrade command handlers."""
+"""pdca integration switch / upgrade command handlers."""
 from __future__ import annotations
 
 import os
@@ -69,7 +69,7 @@ def integration_switch(
                 "to an already installed integration."
             )
             console.print(
-                f"Run [cyan]specify integration upgrade {target} --integration-options ...[/cyan] "
+                f"Run [cyan]pdca integration upgrade {target} --integration-options ...[/cyan] "
                 "to update managed files/options."
             )
             raise typer.Exit(1)
@@ -102,8 +102,8 @@ def integration_switch(
                 "to an already installed integration."
             )
             console.print(
-                f"Run [cyan]specify integration upgrade {target} --integration-options ...[/cyan] "
-                f"to update managed files/options, then [cyan]specify integration use {target}[/cyan]."
+                f"Run [cyan]pdca integration upgrade {target} --integration-options ...[/cyan] "
+                f"to update managed files/options, then [cyan]pdca integration use {target}[/cyan]."
             )
             raise typer.Exit(1)
         raw_options, parsed_options = _resolve_integration_options(
@@ -138,7 +138,7 @@ def integration_switch(
                 console.print(f"[dim]{exc}[/dim]")
                 console.print(
                     f"To recover, delete the unreadable manifest at {manifest_path}, "
-                    f"run [cyan]specify integration uninstall {installed_key}[/cyan], then retry."
+                    f"run [cyan]pdca integration uninstall {installed_key}[/cyan], then retry."
                 )
                 raise typer.Exit(1)
             removed, skipped = current_integration.teardown(
@@ -163,8 +163,8 @@ def integration_switch(
         else:
             console.print(f"[red]Error:[/red] Integration '{installed_key}' is installed but has no manifest.")
             console.print(
-                f"Run [cyan]specify integration uninstall {installed_key}[/cyan] to clear metadata, "
-                f"then retry [cyan]specify integration switch {target}[/cyan]."
+                f"Run [cyan]pdca integration uninstall {installed_key}[/cyan] to clear metadata, "
+                f"then retry [cyan]pdca integration switch {target}[/cyan]."
             )
             raise typer.Exit(1)
 
@@ -237,7 +237,7 @@ def integration_switch(
         ),
         refresh_hint=(
             "To overwrite customizations, re-run with "
-            "[cyan]specify integration switch ... --refresh-shared-infra[/cyan]."
+            "[cyan]pdca integration switch ... --refresh-shared-infra[/cyan]."
         ),
     )
     if os.name != "nt":
@@ -375,7 +375,7 @@ def integration_upgrade(
     manifest_path = project_root / ".pdca" / "integrations" / f"{key}.manifest.json"
     if not manifest_path.exists():
         console.print(f"[yellow]No manifest found for integration '{key}'. Nothing to upgrade.[/yellow]")
-        console.print(f"Run [cyan]specify integration install {key}[/cyan] to perform a fresh install.")
+        console.print(f"Run [cyan]pdca integration install {key}[/cyan] to perform a fresh install.")
         raise typer.Exit(0)
 
     try:

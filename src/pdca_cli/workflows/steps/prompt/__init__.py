@@ -132,11 +132,18 @@ class PromptStep(StepBase):
                 exec_args,
                 text=True,
                 cwd=str(project_root),
+                timeout=600,
             )
             return {
                 "exit_code": result.returncode,
                 "stdout": "",
                 "stderr": "",
+            }
+        except subprocess.TimeoutExpired:
+            return {
+                "exit_code": 124,
+                "stdout": "",
+                "stderr": "Prompt timed out after 600s",
             }
         except KeyboardInterrupt:
             return {
@@ -144,7 +151,7 @@ class PromptStep(StepBase):
                 "stdout": "",
                 "stderr": "Interrupted by user",
             }
-        except OSError:
+        except (FileNotFoundError, OSError):
             return None
 
     def validate(self, config: dict[str, Any]) -> list[str]:

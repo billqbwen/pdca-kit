@@ -1206,7 +1206,7 @@ class ExtensionManager:
         if self.registry.is_installed(manifest.id):
             raise ExtensionError(
                 f"Extension '{manifest.id}' is already installed. "
-                f"Use 'specify extension remove {manifest.id}' first."
+                f"Use 'pdca extension remove {manifest.id}' first."
             )
 
         # Reject manifests that would shadow core commands or installed extensions.
