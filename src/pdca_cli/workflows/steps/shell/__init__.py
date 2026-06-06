@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
+import sys
 from typing import Any
 
 from pdca_cli.workflows.base import StepBase, StepContext, StepResult, StepStatus
@@ -29,6 +31,11 @@ class ShellStep(StepBase):
         # multi-command expressions in workflow YAML.  Workflow authors
         # control commands; catalog-installed workflows should be reviewed
         # before use (see PUBLISHING.md for security guidance).
+        # On Unix, start the process in its own process group so timeout
+        # kills the entire process tree, not just the parent shell.
+        kwargs = {}
+        if sys.platform != "win32":
+            kwargs["preexec_fn"] = os.setsid
         try:
             proc = subprocess.run(
                 run_cmd,
@@ -37,6 +44,7 @@ class ShellStep(StepBase):
                 text=True,
                 cwd=cwd,
                 timeout=300,
+                **kwargs,
             )
             output = {
                 "exit_code": proc.returncode,

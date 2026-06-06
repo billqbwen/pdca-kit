@@ -470,6 +470,9 @@ class CommandRegistrar:
         """Reject names that could escape the commands directory via path traversal."""
         if os.path.sep in name or "/" in name or "\\" in name:
             return False
+        # Reject Windows drive letter prefixes (e.g. C:foobar)
+        if len(name) >= 2 and name[1] == ":" and name[0].isascii() and name[0].isalpha():
+            return False
         return os.path.normpath(name) == name
 
     def register_commands(
@@ -602,6 +605,12 @@ class CommandRegistrar:
                 )
                 output = self.render_toml_command(frontmatter, body, source_id)
             elif agent_config["format"] == "yaml":
+                body = self.resolve_skill_placeholders(
+                    agent_name, frontmatter, body, project_root
+                )
+                body = self._convert_argument_placeholder(
+                    body, "$ARGUMENTS", agent_config["args"]
+                )
                 output = self.render_yaml_command(
                     frontmatter, body, source_id, cmd_name
                 )
@@ -788,7 +797,7 @@ class CommandRegistrar:
 
                     warnings.warn(
                         f"Found legacy '{legacy}' directory for "
-                        f"{agent_name}. Run 'specify integration "
+                        f"{agent_name}. Run 'pdca integration "
                         f"upgrade {agent_name}' to migrate to "
                         f"'{agent_config['dir']}'.",
                         stacklevel=3,

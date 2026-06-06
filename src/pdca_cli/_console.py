@@ -1,4 +1,4 @@
-"""Base Rich/Typer console layer for the specify CLI.
+"""Base Rich/Typer console layer for the pdca CLI.
 
 This module is the single source of Rich ``Console`` instances and Typer UI
 helpers used throughout ``pdca_cli``.  Nothing in this file should import

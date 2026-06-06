@@ -307,7 +307,9 @@ class RunState:
         return self.project_root / ".pdca" / "workflows" / "runs" / self.run_id
 
     def save(self) -> None:
-        """Persist current state to disk."""
+        """Persist current state to disk atomically."""
+        import tempfile
+
         self.updated_at = datetime.now(timezone.utc).isoformat()
         runs_dir = self.runs_dir
         runs_dir.mkdir(parents=True, exist_ok=True)
@@ -322,12 +324,20 @@ class RunState:
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
-        with open(runs_dir / "state.json", "w", encoding="utf-8") as f:
-            json.dump(state_data, f, indent=2)
 
-        inputs_data = {"inputs": self.inputs}
-        with open(runs_dir / "inputs.json", "w", encoding="utf-8") as f:
-            json.dump(inputs_data, f, indent=2)
+        def _atomic_write(path: Path, data: dict) -> None:
+            fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2)
+                os.replace(tmp, path)
+            except BaseException:
+                if Path(tmp).exists():
+                    Path(tmp).unlink(missing_ok=True)
+                raise
+
+        _atomic_write(runs_dir / "state.json", state_data)
+        _atomic_write(runs_dir / "inputs.json", {"inputs": self.inputs})
 
     @classmethod
     def load(cls, run_id: str, project_root: Path) -> RunState:
@@ -338,15 +348,24 @@ class RunState:
             msg = f"Run state not found: {state_path}"
             raise FileNotFoundError(msg)
 
-        with open(state_path, encoding="utf-8") as f:
-            state_data = json.load(f)
+        try:
+            with open(state_path, encoding="utf-8") as f:
+                state_data = json.load(f)
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError) as exc:
+            msg = f"Corrupted run state file {state_path}: {exc}"
+            raise ValueError(msg) from exc
 
-        state = cls(
-            run_id=state_data["run_id"],
-            workflow_id=state_data["workflow_id"],
-            project_root=project_root,
-        )
-        state.status = RunStatus(state_data["status"])
+        try:
+            state = cls(
+                run_id=state_data["run_id"],
+                workflow_id=state_data["workflow_id"],
+                project_root=project_root,
+            )
+            state.status = RunStatus(state_data["status"])
+        except (KeyError, ValueError) as exc:
+            msg = f"Invalid run state data in {state_path}: {exc}"
+            raise ValueError(msg) from exc
+
         state.current_step_index = state_data.get("current_step_index", 0)
         state.current_step_id = state_data.get("current_step_id")
         state.step_results = state_data.get("step_results", {})
@@ -355,9 +374,12 @@ class RunState:
 
         inputs_path = runs_dir / "inputs.json"
         if inputs_path.exists():
-            with open(inputs_path, encoding="utf-8") as f:
-                inputs_data = json.load(f)
-            state.inputs = inputs_data.get("inputs", {})
+            try:
+                with open(inputs_path, encoding="utf-8") as f:
+                    inputs_data = json.load(f)
+                state.inputs = inputs_data.get("inputs", {})
+            except (json.JSONDecodeError, OSError):
+                pass
 
         return state
 
@@ -628,6 +650,7 @@ class WorkflowEngine:
             }
             context.steps[step_id] = step_data
             state.step_results[step_id] = step_data
+            state.save()
 
             state.append_log(
                 {
@@ -763,26 +786,28 @@ class WorkflowEngine:
                 template = result.output.get("step_template", {})
                 if template and items:
                     fan_out_results = []
-                    for item_idx, item_val in enumerate(result.output["items"]):
-                        context.item = item_val
-                        # Per-item ID: parentId:templateId:index
-                        item_step = dict(template)
-                        base_id = item_step.get("id", "item")
-                        item_step["id"] = f"{step_id}:{base_id}:{item_idx}"
-                        self._execute_steps(
-                            [item_step], context, state, registry,
-                            step_offset=-1,
-                        )
-                        # Collect per-item result for fan-in
-                        item_result = context.steps.get(item_step["id"], {})
-                        fan_out_results.append(item_result.get("output", {}))
-                        if state.status in (
-                            RunStatus.PAUSED,
-                            RunStatus.FAILED,
-                            RunStatus.ABORTED,
-                        ):
-                            break
-                    context.item = None
+                    try:
+                        for item_idx, item_val in enumerate(items):
+                            context.item = item_val
+                            # Per-item ID: parentId:templateId:index
+                            item_step = dict(template)
+                            base_id = item_step.get("id", "item")
+                            item_step["id"] = f"{step_id}:{base_id}:{item_idx}"
+                            self._execute_steps(
+                                [item_step], context, state, registry,
+                                step_offset=-1,
+                            )
+                            # Collect per-item result for fan-in
+                            item_result = context.steps.get(item_step["id"], {})
+                            fan_out_results.append(item_result.get("output", {}))
+                            if state.status in (
+                                RunStatus.PAUSED,
+                                RunStatus.FAILED,
+                                RunStatus.ABORTED,
+                            ):
+                                break
+                    finally:
+                        context.item = None
                     # Preserve original output and add collected results
                     fan_out_output = dict(result.output)
                     fan_out_output["results"] = fan_out_results

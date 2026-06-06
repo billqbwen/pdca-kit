@@ -49,7 +49,7 @@ class IntegrationOption:
         is_flag:   ``True`` for boolean flags (``--skills``).
         required:  ``True`` if the option must be supplied.
         default:   Default value when not supplied (``None`` → no default).
-        help:      One-line description shown in ``specify integrate info``.
+        help:      One-line description shown in ``pdca integration info``.
     """
 
     name: str
@@ -273,20 +273,33 @@ class IntegrationBase(ABC):
         cwd = str(project_root) if project_root else None
 
         if stream:
-            # No timeout when streaming — the user sees live output and
-            # can Ctrl+C at any time.  The timeout parameter is only
-            # applied in the captured (non-streaming) branch below.
             try:
                 result = subprocess.run(
                     exec_args,
                     text=True,
                     cwd=cwd,
+                    timeout=timeout + 120,
                 )
+            except subprocess.TimeoutExpired:
+                return {
+                    "exit_code": 124,
+                    "stdout": "",
+                    "stderr": f"Command timed out after {timeout + 120}s (streaming)",
+                }
             except KeyboardInterrupt:
                 return {
                     "exit_code": 130,
                     "stdout": "",
                     "stderr": "Interrupted by user",
+                }
+            except FileNotFoundError as exc:
+                return {
+                    "exit_code": 127,
+                    "stdout": "",
+                    "stderr": (
+                        f"Executable not found: {exc.filename or exec_args[0]!r}. "
+                        f"Ensure the integration CLI is installed and on PATH."
+                    ),
                 }
             return {
                 "exit_code": result.returncode,
@@ -294,13 +307,29 @@ class IntegrationBase(ABC):
                 "stderr": "",
             }
 
-        result = subprocess.run(
-            exec_args,
-            capture_output=True,
-            text=True,
-            cwd=cwd,
-            timeout=timeout,
-        )
+        try:
+            result = subprocess.run(
+                exec_args,
+                capture_output=True,
+                text=True,
+                cwd=cwd,
+                timeout=timeout,
+            )
+        except subprocess.TimeoutExpired:
+            return {
+                "exit_code": 124,
+                "stdout": "",
+                "stderr": f"Command timed out after {timeout}s",
+            }
+        except FileNotFoundError as exc:
+            return {
+                "exit_code": 127,
+                "stdout": "",
+                "stderr": (
+                    f"Executable not found: {exc.filename or exec_args[0]!r}. "
+                    f"Ensure the integration CLI is installed and on PATH."
+                ),
+            }
         return {
             "exit_code": result.returncode,
             "stdout": result.stdout,
@@ -666,7 +695,7 @@ class IntegrationBase(ABC):
             "[yellow]Deprecation:[/yellow] Inline agent-context updates during "
             "integration setup will be disabled in v0.12.0. Context file "
             "management has moved to the bundled [bold]agent-context[/bold] "
-            "extension. Run [cyan]specify extension disable agent-context[/cyan] "
+            "extension. Run [cyan]pdca extension disable agent-context[/cyan] "
             "to opt out early.",
             highlight=False,
         )

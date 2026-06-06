@@ -69,7 +69,7 @@ def _substitute_core_template(
     #    fallback for extension commands whose file is named differently from the
     #    command name (e.g. pdca.selftest.extension → commands/selftest.md).
     # 3. resolve_core(short_name) — core template fallback using the unprefixed
-    #    name (e.g. specify → templates/commands/specify.md).
+    #    name (e.g. pdca → templates/commands/specify.md).
     # resolve_core() skips installed presets (tier 2) to prevent accidental nesting
     # where another preset's wrap output is mistaken for the real core.
     core_file = (
@@ -1526,7 +1526,7 @@ class PresetManager:
         if self.registry.is_installed(manifest.id):
             raise PresetError(
                 f"Preset '{manifest.id}' is already installed. "
-                f"Use 'specify preset remove {manifest.id}' first."
+                f"Use 'pdca preset remove {manifest.id}' first."
             )
 
         dest_dir = self.presets_dir / manifest.id
@@ -1741,7 +1741,7 @@ class PresetManager:
                 warnings.warn(
                     f"Post-removal reconciliation failed for {pack_id}: {exc}. "
                     f"Agent command files may be stale; reinstall affected presets "
-                    f"or run 'specify preset add' to refresh.",
+                    f"or run 'pdca preset add' to refresh.",
                     stacklevel=2,
                 )
 
@@ -2295,7 +2295,7 @@ class PresetCatalog:
             raise PresetError(
                 f"Preset '{pack_id}' is bundled with pdca-kit and has no download URL. "
                 f"It should be installed from the local package. "
-                f"Use 'specify preset add {pack_id}' to install from the bundled package, "
+                f"Use 'pdca preset add {pack_id}' to install from the bundled package, "
                 f"or reinstall pdca-kit if the bundled files are missing: {REINSTALL_COMMAND}"
             )
 

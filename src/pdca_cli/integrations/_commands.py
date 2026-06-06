@@ -1,4 +1,4 @@
-"""specify integration * commands — app objects and register() entry point."""
+"""pdca integration * commands — app objects and register() entry point."""
 from __future__ import annotations
 
 import typer

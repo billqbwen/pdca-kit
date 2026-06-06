@@ -91,7 +91,7 @@ class CommandStep(StepBase):
                 error=(
                     f"Cannot dispatch command {command!r}: "
                     f"integration {integration!r} CLI not found or not installed. "
-                    f"Install the CLI tool or check 'specify integration list'."
+                    f"Install the CLI tool or check 'pdca integration list'."
                 ),
             )
 
