@@ -21,7 +21,7 @@ from rich.tree import Tree
 from typer.core import TyperGroup
 
 BANNER = r"""
- _____  _____   _____
+  _____  _____   _____
 |  __ \|  __ \ / ____|   /\
 | |__) | |  | | |       /  \
 |  ___/| |  | | |      / /\ \
