@@ -44,10 +44,12 @@ PLAN ──→ DO ──→ CHECK ──→ ACT ──→ (repeat)
 - **Python 3.11+**
 - **pip** (or pipx, uv for alternative installs)
 
-### Install from PyPI (recommended)
+### Install from source (current)
 
 ```bash
-pip install pdca-kit
+git clone https://github.com/billqbwen/pdca-kit.git
+cd pdca-kit
+pip install -e .
 ```
 
 Verify the installation:
@@ -60,19 +62,16 @@ pdca --help
 ### Alternative Install Methods
 
 ```bash
-# Install with pipx (isolated environment)
-pipx install pdca-kit
+# Run directly without cloning (via uvx)
+uvx --from git+https://github.com/billqbwen/pdca-kit.git pdca --help
 
-# Install with uv (fast Python package manager)
-uv tool install pdca-kit
-# or run directly without installing
-uvx pdca-kit
-
-# Install from source
+# Or from a local clone with uv
 git clone https://github.com/billqbwen/pdca-kit.git
 cd pdca-kit
-pip install -e .
+uv tool install -e .
 ```
+
+> **Note:** PDCA Kit is not yet published on PyPI. Install from source or use `uvx` for one-off commands. Once published, `pip install pdca-kit` will be the recommended method.
 
 ### Dependencies
 
