@@ -44,6 +44,10 @@ env/
 .env.local
 *.lock
 
+# Test coverage
+.coverage
+htmlcov/
+
 # Spec Kit-specific files
 .genreleases/
 *.zip
