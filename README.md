@@ -37,6 +37,103 @@ PLAN ──→ DO ──→ CHECK ──→ ACT ──→ (repeat)
 
 ---
 
+## 📦 Installation
+
+### Prerequisites
+
+- **Python 3.11+**
+- **pip** (or pipx, uv for alternative installs)
+
+### Install from PyPI (recommended)
+
+```bash
+pip install pdca-kit
+```
+
+Verify the installation:
+
+```bash
+pdca --version
+pdca --help
+```
+
+### Alternative Install Methods
+
+```bash
+# Install with pipx (isolated environment)
+pipx install pdca-kit
+
+# Install with uv (fast Python package manager)
+uv tool install pdca-kit
+# or run directly without installing
+uvx pdca-kit
+
+# Install from source
+git clone https://github.com/billqbwen/pdca-kit.git
+cd pdca-kit
+pip install -e .
+```
+
+### Dependencies
+
+PDCA Kit requires the following Python packages (installed automatically with the package):
+
+| Package | Purpose |
+|---------|---------|
+| `typer` / `click` | CLI framework |
+| `rich` | Terminal UI formatting |
+| `pyyaml` | YAML handling |
+| `readchar` | Cross-platform keypress input |
+| `packaging` | Version comparison utilities |
+| `pathspec` | `.gitignore`-style pattern matching |
+| `json5` | JSON5 config parsing |
+| `platformdirs` | Cross-platform directory resolution |
+
+## 🚀 Quick Start
+
+### 1. Initialize a new project
+
+```bash
+pdca init my-project --integration claude
+cd my-project
+```
+
+This scaffolds the project structure, installs PDCA slash commands for your AI coding agent, and copies the core templates.
+
+### 2. Choose a different agent
+
+```bash
+pdca init my-project --integration cursor-agent
+```
+
+See all available integrations:
+
+```bash
+pdca integration list
+```
+
+### 3. Start the PDCA cycle
+
+Open the project in your AI coding agent and use the slash commands:
+
+| Command | What to do |
+|---------|-----------|
+| `/pdca.constitution` | Define your project's governing principles |
+| `/pdca.define` | Describe a feature in natural language to create a spec |
+| `/pdca.plan` | Generate an implementation plan from the spec |
+| `/pdca.tasks` | Break the plan into executable tasks |
+| `/pdca.implement` | Build the feature task by task |
+| `/pdca.review` | Review code against the spec and plan |
+
+### Next Steps
+
+- Run `pdca check` to verify your environment is set up correctly
+- Run `pdca preset list` to explore available presets
+- Run `pdca extension list` to see available extensions
+- Read the [full documentation](docs/) for detailed guidance
+
+---
+
 ## 🚀 What PDCA Kit Does
 
 ### Core Capabilities
