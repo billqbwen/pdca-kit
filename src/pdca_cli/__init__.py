@@ -12,7 +12,7 @@
 # ]
 # ///
 """
-PDCA CLI - Setup tool for Specify projects
+PDCA CLI - Setup tool for PDCA projects
 
 Usage:
     uvx pdca-cli.py init <project-name>
@@ -91,7 +91,7 @@ from ._agent_config import (
 
 app = typer.Typer(
     name="pdca",
-    help="Setup tool for Specify spec-driven development projects",
+    help="Setup tool for PDCA spec-driven development projects",
     add_completion=False,
     invoke_without_command=True,
     cls=BannerGroup,
