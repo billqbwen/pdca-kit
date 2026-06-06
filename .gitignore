@@ -34,6 +34,10 @@ env/
 .DS_Store
 *.tmp
 
+# AI coding assistants
+.claude/
+.codebuddy/
+
 # Project specific
 *.log
 .env
