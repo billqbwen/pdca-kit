@@ -25,7 +25,7 @@ class CursorAgentIntegration(SkillsIntegration):
         "extension": "/SKILL.md",
     }
 
-    context_file = ".cursor/rules/specify-rules.mdc"
+    context_file = ".cursor/rules/pdca-rules.mdc"
     multi_install_safe = True
 
     @classmethod

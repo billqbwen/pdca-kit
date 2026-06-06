@@ -18,5 +18,5 @@ class AuggieIntegration(MarkdownIntegration):
         "args": "$ARGUMENTS",
         "extension": ".md",
     }
-    context_file = ".augment/rules/specify-rules.md"
+    context_file = ".augment/rules/pdca-rules.md"
     multi_install_safe = True

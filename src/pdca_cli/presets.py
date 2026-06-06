@@ -69,7 +69,7 @@ def _substitute_core_template(
     #    fallback for extension commands whose file is named differently from the
     #    command name (e.g. pdca.selftest.extension → commands/selftest.md).
     # 3. resolve_core(short_name) — core template fallback using the unprefixed
-    #    name (e.g. pdca → templates/commands/specify.md).
+    #    name (e.g. pdca → templates/commands/define.md).
     # resolve_core() skips installed presets (tier 2) to prevent accidental nesting
     # where another preset's wrap output is mistaken for the real core.
     core_file = (
@@ -1287,7 +1287,7 @@ class PresetManager:
             if composed_file.exists():
                 source_file = composed_file
 
-            # Derive the short command name (e.g. "specify" from "pdca.pdca")
+            # Derive the short command name (e.g. "define" from "pdca.define")
             raw_short_name = cmd_name
             if raw_short_name.startswith("pdca."):
                 raw_short_name = raw_short_name[len("pdca."):]
@@ -1396,7 +1396,7 @@ class PresetManager:
         extension_restore_index = self._build_extension_skill_restore_index()
 
         for skill_name in skill_names:
-            # Derive command name from skill name (pdca-specify -> specify)
+            # Derive command name from skill name (pdca-define -> define)
             short_name = skill_name
             if short_name.startswith("pdca-"):
                 short_name = short_name[len("pdca-"):]
@@ -2437,7 +2437,7 @@ class PresetResolver:
         """Extract the stem for core command lookup.
 
         Commands use dot notation (e.g. ``pdca.define``), but core
-        command files are named by stem (e.g. ``specify.md``).  Returns
+        command files are named by stem (e.g. ``define.md``).  Returns
         the stem if *template_name* follows the ``pdca.<stem>`` pattern,
         or ``None`` otherwise.
         """

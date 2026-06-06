@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-    <a href="https://github.com/github/pdca-kit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/github/pdca-kit" alt="License"/></a>
+    <a href="https://github.com/billqbwen/pdca-kit/blob/main/LICENSE"><img src="https://img.shields.io/github/license/billqbwen/pdca-kit" alt="License"/></a>
 </p>
 
 ---
@@ -43,7 +43,7 @@ PLAN ──→ DO ──→ CHECK ──→ ACT ──→ (repeat)
 
 - **Project Bootstrapping** — `pdca init` scaffolds your project with templates, scripts, and agent integration in seconds
 - **14 AI Agent Commands** — structured slash commands (`/pdca.*`) that guide AI coding agents through the full PDCA lifecycle
-- **31 Coding Agent Integrations** — works with Claude, Copilot, Cursor, Windsurf, Gemini CLI, Codex, Qwen, and more
+- **33 Coding Agent Integrations** — works with Claude, Copilot, Cursor, Windsurf, Gemini CLI, Codex, Qwen, and more
 - **Extension System** — add new commands and capabilities beyond the core workflow
 - **Preset System** — customize templates and terminology to fit your organization's standards
 - **Workflow Engine** — compose multi-step workflows with conditionals, loops, parallel execution, and user prompts
@@ -110,7 +110,7 @@ All templates, scripts, and commands are bundled into the package. No network ca
 
 ### Agent-Agnostic
 
-The same commands work across Claude, Copilot, Cursor, Gemini, and 27+ other coding agents. Choose the agent, keep the methodology.
+The same commands work across Claude, Copilot, Cursor, Gemini, and 29+ other coding agents. Choose the agent, keep the methodology.
 
 ---
 

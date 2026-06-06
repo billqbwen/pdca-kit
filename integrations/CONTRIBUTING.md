@@ -43,7 +43,7 @@ Community integrations are contributed by external developers and listed in `int
 
 ### Prerequisites
 
-1. **Working integration** — tested with `specify integration install`
+1. **Working integration** — tested with `pdca integration install`
 2. **Public repository** — hosted on GitHub or similar
 3. **`integration.yml` descriptor** — valid descriptor file (see below)
 4. **Documentation** — README with usage instructions
@@ -71,8 +71,8 @@ requires:
       required: true
 provides:
   commands:
-    - name: "pdca.specify"
-      file: "templates/pdca.specify.md"
+    - name: "pdca.define"
+      file: "templates/pdca.define.md"
   scripts:
     - update-context.sh
 ```
@@ -126,7 +126,7 @@ To update your integration version in the catalog:
 
 ## Upgrade Workflow
 
-The `specify integration upgrade` command supports diff-aware upgrades:
+The `pdca integration upgrade` command supports diff-aware upgrades:
 
 1. **Hash comparison** — the manifest records SHA-256 hashes of all installed files
 2. **Modified file detection** — files changed since installation are flagged
@@ -135,8 +135,8 @@ The `specify integration upgrade` command supports diff-aware upgrades:
 
 ```bash
 # Upgrade current integration (blocks if files are modified)
-specify integration upgrade
+pdca integration upgrade
 
 # Force upgrade (overwrites modified files)
-specify integration upgrade --force
+pdca integration upgrade --force
 ```

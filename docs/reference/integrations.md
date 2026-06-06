@@ -42,7 +42,7 @@ The PDCA CLI supports a wide range of AI coding agents. When you run `pdca init`
 ## List Available Integrations
 
 ```bash
-specify integration list
+pdca integration list
 ```
 
 Shows all available integrations, which one is currently installed, and whether each requires a CLI tool or is IDE-based.
@@ -52,7 +52,7 @@ The list also shows whether each built-in integration is declared multi-install 
 ## Install an Integration
 
 ```bash
-specify integration install <key>
+pdca integration install <key>
 ```
 
 | Option                   | Description                                                              |
@@ -63,16 +63,16 @@ specify integration install <key>
 
 Installs the specified integration into the current project. If another integration is already installed, the command only proceeds automatically when all involved integrations are declared multi-install safe. Otherwise, use `switch` to replace the default integration or pass `--force` to explicitly opt in to multi-install. If the installation fails partway through, it automatically rolls back to a clean state.
 
-Installing an additional integration does not change the default integration. Use `specify integration use <key>` to change the default.
+Installing an additional integration does not change the default integration. Use `pdca integration use <key>` to change the default.
 
 > **Note:** All integration management commands require a project already initialized with `pdca init`. To start a new project with a specific agent, use `pdca init <project> --integration <key>` instead.
 
-**Version note:** Controlled multi-install support was introduced in PDCA Kit 0.8.5. If `specify integration install <key>` says another integration is already installed and only suggests `switch` or `uninstall`, check your local CLI with `pdca version` and upgrade it. Running a one-shot command such as `uvx --from git+https://github.com/github/pdca-kit.git specify ...` uses a temporary copy for that command only; it does not update the persistent `specify` executable on your `PATH`.
+**Version note:** Controlled multi-install support was introduced in PDCA Kit 0.8.5. If `pdca integration install <key>` says another integration is already installed and only suggests `switch` or `uninstall`, check your local CLI with `pdca version` and upgrade it. Running a one-shot command such as `uvx --from git+https://github.com/github/pdca-kit.git pdca ...` uses a temporary copy for that command only; it does not update the persistent `pdca` executable on your `PATH`.
 
 ## Uninstall an Integration
 
 ```bash
-specify integration uninstall [<key>]
+pdca integration uninstall [<key>]
 ```
 
 | Option    | Description                                         |
@@ -88,7 +88,7 @@ Uninstalls the current integration (or the specified one). PDCA Kit tracks every
 ## Switch to a Different Integration
 
 ```bash
-specify integration switch <key>
+pdca integration switch <key>
 ```
 
 | Option                   | Description                                                              |
@@ -102,7 +102,7 @@ If the target integration is not already installed, equivalent to running `unins
 ## Use an Installed Integration
 
 ```bash
-specify integration use <key>
+pdca integration use <key>
 ```
 
 | Option    | Description                                         |
@@ -114,7 +114,7 @@ Sets the default integration without uninstalling any other installed integratio
 ## Upgrade an Integration
 
 ```bash
-specify integration upgrade [<key>]
+pdca integration upgrade [<key>]
 ```
 
 | Option                   | Description                                                              |
@@ -137,7 +137,7 @@ Some integrations accept additional options via `--integration-options`:
 Example:
 
 ```bash
-specify integration install generic --integration-options="--commands-dir .myagent/cmds"
+pdca integration install generic --integration-options="--commands-dir .myagent/cmds"
 ```
 
 ## FAQ
@@ -156,23 +156,23 @@ The currently declared multi-install safe integrations are:
 
 | Key | Isolation |
 | --- | --------- |
-| `auggie` | `.augment/commands`, `.augment/rules/specify-rules.md` |
+| `auggie` | `.augment/commands`, `.augment/rules/pdca-rules.md` |
 | `claude` | `.claude/skills`, `CLAUDE.md` |
 | `codebuddy` | `.codebuddy/commands`, `CODEBUDDY.md` |
 | `codex` | `.agents/skills`, `AGENTS.md` |
-| `cursor-agent` | `.cursor/skills`, `.cursor/rules/specify-rules.mdc` |
+| `cursor-agent` | `.cursor/skills`, `.cursor/rules/pdca-rules.mdc` |
 | `gemini` | `.gemini/commands`, `GEMINI.md` |
 | `iflow` | `.iflow/commands`, `IFLOW.md` |
 | `junie` | `.junie/commands`, `.junie/AGENTS.md` |
-| `kilocode` | `.kilocode/workflows`, `.kilocode/rules/specify-rules.md` |
+| `kilocode` | `.kilocode/workflows`, `.kilocode/rules/pdca-rules.md` |
 | `kimi` | `.kimi/skills`, `KIMI.md` |
 | `qodercli` | `.qoder/commands`, `QODER.md` |
 | `qwen` | `.qwen/commands`, `QWEN.md` |
-| `roo` | `.roo/commands`, `.roo/rules/specify-rules.md` |
+| `roo` | `.roo/commands`, `.roo/rules/pdca-rules.md` |
 | `shai` | `.shai/commands`, `SHAI.md` |
 | `tabnine` | `.tabnine/agent/commands`, `TABNINE.md` |
 | `trae` | `.trae/skills`, `.trae/rules/project_rules.md` |
-| `windsurf` | `.windsurf/workflows`, `.windsurf/rules/specify-rules.md` |
+| `windsurf` | `.windsurf/workflows`, `.windsurf/rules/pdca-rules.md` |
 
 Integrations that share a context file or command directory with another integration, require dynamic install paths such as `--commands-dir`, or merge shared tool settings are not declared safe by default. They can still be installed alongside another integration with `--force`.
 
@@ -182,11 +182,11 @@ Files you've modified are preserved automatically. Only unmodified files (matchi
 
 ### How do I know which key to use?
 
-Run `specify integration list` to see all available integrations with their keys, or check the [Supported AI Coding Agents](#supported-ai-coding-agents) table above.
+Run `pdca integration list` to see all available integrations with their keys, or check the [Supported AI Coding Agents](#supported-ai-coding-agents) table above.
 
 ### Do I need the AI coding agent installed to use an integration?
 
-CLI-based integrations (like Claude Code, Gemini CLI) require the tool to be installed. IDE-based integrations (like Windsurf, Cursor) work through the IDE itself. Some agents like GitHub Copilot support both IDE and CLI usage. `specify integration list` shows which type each integration is.
+CLI-based integrations (like Claude Code, Gemini CLI) require the tool to be installed. IDE-based integrations (like Windsurf, Cursor) work through the IDE itself. Some agents like GitHub Copilot support both IDE and CLI usage. `pdca integration list` shows which type each integration is.
 
 ### When should I use `upgrade` vs `switch`?
 

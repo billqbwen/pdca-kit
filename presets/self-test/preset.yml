@@ -53,7 +53,7 @@ provides:
     - type: "command"
       name: "pdca.define"
       file: "commands/pdca.define.md"
-      description: "Self-test override of the specify command"
+      description: "Self-test override of the define command"
       replaces: "pdca.define"
 
     - type: "command"

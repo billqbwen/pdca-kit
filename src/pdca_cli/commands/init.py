@@ -767,7 +767,7 @@ def register(app: typer.Typer) -> None:
         steps_lines.append(f"{step_num}. Start using {usage_label} with your coding agent:")
 
         steps_lines.append(f"   {step_num}.1 [cyan]{_display_cmd('constitution')}[/] - Establish project principles")
-        steps_lines.append(f"   {step_num}.2 [cyan]{_display_cmd('specify')}[/] - Create baseline specification")
+        steps_lines.append(f"   {step_num}.2 [cyan]{_display_cmd('define')}[/] - Create baseline specification")
         steps_lines.append(f"   {step_num}.3 [cyan]{_display_cmd('plan')}[/] - Create implementation plan")
         steps_lines.append(f"   {step_num}.4 [cyan]{_display_cmd('tasks')}[/] - Generate actionable tasks")
         steps_lines.append(f"   {step_num}.5 [cyan]{_display_cmd('implement')}[/] - Execute implementation")

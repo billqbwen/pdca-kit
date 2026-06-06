@@ -18,5 +18,5 @@ class KilocodeIntegration(MarkdownIntegration):
         "args": "$ARGUMENTS",
         "extension": ".md",
     }
-    context_file = ".kilocode/rules/specify-rules.md"
+    context_file = ".kilocode/rules/pdca-rules.md"
     multi_install_safe = True

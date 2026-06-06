@@ -18,8 +18,8 @@ set -euo pipefail
 
 PROJECT_ROOT="$(pwd)"
 EXT_CONFIG="$PROJECT_ROOT/.pdca/extensions/agent-context/agent-context-config.yml"
-DEFAULT_START="<!-- SPECKIT START -->"
-DEFAULT_END="<!-- SPECKIT END -->"
+DEFAULT_START="<!-- PDCA START -->"
+DEFAULT_END="<!-- PDCA END -->"
 
 if [[ ! -f "$EXT_CONFIG" ]]; then
   echo "agent-context: $EXT_CONFIG not found; nothing to do." >&2

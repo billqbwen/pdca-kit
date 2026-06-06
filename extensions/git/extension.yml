@@ -44,7 +44,7 @@ hooks:
     command: pdca.git.initialize
     optional: false
     description: "Initialize Git repository before constitution setup"
-  before_specify:
+  before_define:
     command: pdca.git.feature
     optional: false
     description: "Create feature branch before specification"
@@ -88,7 +88,7 @@ hooks:
     optional: true
     prompt: "Commit constitution changes?"
     description: "Auto-commit after constitution update"
-  after_specify:
+  after_define:
     command: pdca.git.commit
     optional: true
     prompt: "Commit specification changes?"

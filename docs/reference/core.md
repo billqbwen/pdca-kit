@@ -1,6 +1,6 @@
 # Core Commands
 
-The core `specify` commands handle project initialization, system checks, and version information.
+The core `pdca` commands handle project initialization, system checks, and version information.
 
 ## Initialize a Project
 
@@ -69,7 +69,7 @@ pdca check
 
 Checks that required tools are available on your system: `git` and any CLI-based AI coding agents. IDE-based agents are skipped since they don't require a CLI tool.
 
-This command stays offline. If a command behaves like an older PDCA Kit version or an expected CLI feature is missing, run `specify self check` to check whether your local CLI is behind the latest release.
+This command stays offline. If a command behaves like an older PDCA Kit version or an expected CLI feature is missing, run `pdca self check` to check whether your local CLI is behind the latest release.
 
 ## Version Information
 
@@ -92,6 +92,6 @@ workflow based on the installed CLI's supported features.
 A quick version check is also available via:
 
 ```bash
-specify --version
-specify -V
+pdca --version
+pdca -V
 ```

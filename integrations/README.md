@@ -35,19 +35,19 @@ catalogs:
 
 ```bash
 # List built-in integrations (default)
-specify integration list
+pdca integration list
 
 # Browse full catalog (built-in + community)
-specify integration list --catalog
+pdca integration list --catalog
 
 # Install an integration
-specify integration install copilot
+pdca integration install copilot
 
 # Upgrade the current integration (diff-aware)
-specify integration upgrade
+pdca integration upgrade
 
 # Upgrade with force (overwrite modified files)
-specify integration upgrade --force
+pdca integration upgrade --force
 ```
 
 ## Integration Descriptor (`integration.yml`)
@@ -72,8 +72,8 @@ requires:
       required: true
 provides:
   commands:
-    - name: "pdca.specify"
-      file: "templates/pdca.specify.md"
+    - name: "pdca.define"
+      file: "templates/pdca.define.md"
     - name: "pdca.plan"
       file: "templates/pdca.plan.md"
   scripts:

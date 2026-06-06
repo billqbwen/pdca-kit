@@ -215,8 +215,8 @@ class IntegrationBase(ABC):
         agents or ``"/pdca-specify my-feature"`` for skills agents.
 
         *command_name* may be a full dotted name like
-        ``"pdca.pdca"``, an extension command like
-        ``"pdca.git.commit"``, or a bare stem like ``"specify"``.
+        ``"pdca.define"``, an extension command like
+        ``"pdca.git.commit"``, or a bare stem like ``"define"``.
         """
         stem = command_name
         if stem.startswith("pdca."):

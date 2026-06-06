@@ -2,7 +2,7 @@
 
 This bundled extension manages the **coding agent context/instruction file** (e.g. `CLAUDE.md`, `.github/copilot-instructions.md`, `AGENTS.md`, `GEMINI.md`, …) for the active integration.
 
-It owns the lifecycle of the managed section delimited by the configurable start/end markers (defaults: `<!-- SPECKIT START -->` / `<!-- SPECKIT END -->`).
+It owns the lifecycle of the managed section delimited by the configurable start/end markers (defaults: `<!-- PDCA START -->` / `<!-- PDCA END -->`).
 
 ## Why an extension?
 
@@ -29,18 +29,18 @@ context_file: CLAUDE.md
 
 # Delimiters for the managed PDCA Kit section
 context_markers:
-  start: "<!-- SPECKIT START -->"
-  end: "<!-- SPECKIT END -->"
+  start: "<!-- PDCA START -->"
+  end: "<!-- PDCA END -->"
 ```
 
-- `context_file` — the project-relative path to the coding agent context file, written by `pdca init` and `specify integration install`.
+- `context_file` — the project-relative path to the coding agent context file, written by `pdca init` and `pdca integration install`.
 - `context_markers.start` / `.end` — the delimiters around the managed section. Edit these to use custom markers.
 
 ## Requirements
 
 The bundled update scripts require **Python 3** with **PyYAML** for YAML/upsert processing (PowerShell can also use `ConvertFrom-Yaml` when available).
 
-PyYAML ships with the `specify` CLI and is normally available via the same `python3` interpreter. If a hook reports *"PyYAML is required … not available in the current Python environment"*, it means the system `python3` differs from the one used to install PDCA Kit. To resolve, run:
+PyYAML ships with the `pdca` CLI and is normally available via the same `python3` interpreter. If a hook reports *"PyYAML is required … not available in the current Python environment"*, it means the system `python3` differs from the one used to install PDCA Kit. To resolve, run:
 
 ```bash
 pip install pyyaml

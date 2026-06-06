@@ -159,7 +159,7 @@ function Find-ProjectRoot {
     param([string]$StartDir)
     $current = Resolve-Path $StartDir
     while ($true) {
-        foreach ($marker in @('.specify', '.git')) {
+        foreach ($marker in @('.pdca', '.git')) {
             if (Test-Path (Join-Path $current $marker)) {
                 return $current
             }

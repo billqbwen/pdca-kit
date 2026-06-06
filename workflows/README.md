@@ -8,7 +8,7 @@ A workflow definition declares a sequence of steps. The engine executes them in 
 
 ```yaml
 steps:
-  - id: specify
+  - id: define
     command: pdca.define
     input:
       args: "{{ inputs.spec }}"
@@ -85,7 +85,7 @@ Workflows support 10 built-in step types:
 Invoke an installed PDCA Kit command by name via the integration CLI:
 
 ```yaml
-- id: specify
+- id: define
   command: pdca.define
   input:
     args: "{{ inputs.spec }}"
@@ -305,7 +305,7 @@ Workflow definitions use `{{ expression }}` syntax for dynamic values:
 args: "{{ inputs.spec }}"
 
 # Access previous step outputs
-args: "{{ steps.specify.output.file }}"
+args: "{{ steps.define.output.file }}"
 
 # Comparisons
 condition: "{{ steps.run-tests.output.exit_code != 0 }}"

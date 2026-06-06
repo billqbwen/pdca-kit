@@ -1,6 +1,6 @@
 # Installing uv
 
-[uv](https://docs.astral.sh/uv/) is a fast Python package manager by [Astral](https://astral.sh/). PDCA Kit uses `uv` (via `uvx` or `uv tool install`) to run the `specify` CLI without polluting your global Python environment.
+[uv](https://docs.astral.sh/uv/) is a fast Python package manager by [Astral](https://astral.sh/). PDCA Kit uses `uv` (via `uvx` or `uv tool install`) to run the `pdca` CLI without polluting your global Python environment.
 
 > [!NOTE]
 > **Already have uv?** Run `uv --version` to confirm it is installed, then head back to the [Installation Guide](../installation.md).

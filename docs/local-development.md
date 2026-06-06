@@ -1,6 +1,6 @@
 # Local Development Guide
 
-This guide shows how to iterate on the `specify` CLI locally without publishing a release or committing to `main` first.
+This guide shows how to iterate on the `pdca` CLI locally without publishing a release or committing to `main` first.
 
 > Scripts now have both Bash (`.sh`) and PowerShell (`.ps1`) variants. The CLI auto-selects based on OS unless you pass `--script sh|ps`.
 
@@ -41,8 +41,8 @@ source .venv/bin/activate  # or on Windows PowerShell: .venv\Scripts\Activate.ps
 # Install project in editable mode
 uv pip install -e .
 
-# Now 'specify' entrypoint is available
-specify --help
+# Now 'pdca' entrypoint is available
+pdca --help
 ```
 
 Re-running after code edits requires no reinstall because of editable mode.
@@ -68,7 +68,7 @@ uvx --from git+https://github.com/github/pdca-kit.git@your-feature-branch pdca i
 If you're in another directory, use an absolute path instead of `.`:
 
 ```bash
-uvx --from /mnt/c/GitHub/pdca-kit specify --help
+uvx --from /mnt/c/GitHub/pdca-kit pdca --help
 uvx --from /mnt/c/GitHub/pdca-kit pdca init demo-anywhere --integration copilot --ignore-agent-tools --script sh
 ```
 
@@ -82,9 +82,9 @@ uvx --from "$SPEC_KIT_SRC" pdca init demo-env --integration copilot --ignore-age
 (Optional) Define a shell function:
 
 ```bash
-specify-dev() { uvx --from /mnt/c/GitHub/pdca-kit specify "$@"; }
+pdca-dev() { uvx --from /mnt/c/GitHub/pdca-kit pdca "$@"; }
 # Then
-specify-dev --help
+pdca-dev --help
 ```
 
 ## 5. Testing Script Permission Logic
@@ -142,10 +142,10 @@ Or copy only the modified CLI portion if you want a lighter sandbox.
 | Action | Command |
 |--------|---------|
 | Run CLI directly | `python -m src.pdca_cli --help` |
-| Editable install | `uv pip install -e .` then `specify ...` |
-| Local uvx run (repo root) | `uvx --from . specify ...` |
-| Local uvx run (abs path) | `uvx --from /mnt/c/GitHub/pdca-kit specify ...` |
-| Git branch uvx | `uvx --from git+URL@branch specify ...` |
+| Editable install | `uv pip install -e .` then `pdca ...` |
+| Local uvx run (repo root) | `uvx --from . pdca ...` |
+| Local uvx run (abs path) | `uvx --from /mnt/c/GitHub/pdca-kit pdca ...` |
+| Git branch uvx | `uvx --from git+URL@branch pdca ...` |
 | Build wheel | `uv build` |
 
 ## 11. Cleaning Up

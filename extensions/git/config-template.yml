@@ -36,7 +36,7 @@ auto_commit:
   after_constitution:
     enabled: false
     message: "[PDCA Kit] Add project constitution"
-  after_specify:
+  after_define:
     enabled: false
     message: "[PDCA Kit] Add specification"
   after_clarify:

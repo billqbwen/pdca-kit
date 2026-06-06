@@ -60,7 +60,7 @@
 		"git.autofetch": true,
 		"chat.promptFilesRecommendations": {
 			"pdca.constitution": true,
-			"pdca.specify": true,
+			"pdca.define": true,
 			"pdca.plan": true,
 			"pdca.tasks": true,
 			"pdca.implement": true

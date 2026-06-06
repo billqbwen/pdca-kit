@@ -17,7 +17,7 @@ provides:
     - type: "command"
       name: "pdca.define"
       file: "commands/pdca.define.md"
-      description: "Lean specify - create spec.md from a feature description"
+      description: "Lean define - create spec.md from a feature description"
       replaces: "pdca.define"
 
     - type: "command"

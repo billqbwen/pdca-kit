@@ -3,7 +3,7 @@
 This guide will help you get started with Spec-Driven Development using PDCA Kit.
 
 > [!NOTE]
-> All automation scripts now provide both Bash (`.sh`) and PowerShell (`.ps1`) variants. The `specify` CLI auto-selects based on OS unless you pass `--script sh|ps`.
+> All automation scripts now provide both Bash (`.sh`) and PowerShell (`.ps1`) variants. The `pdca` CLI auto-selects based on OS unless you pass `--script sh|ps`.
 
 ## Recommended Workflow
 
@@ -20,7 +20,7 @@ Use `/pdca.clarify` to reduce requirement ambiguity before planning, `/pdca.chec
 
 ### Step 1: Install Specify
 
-**In your terminal**, run the `specify` CLI command to initialize your project:
+**In your terminal**, run the `pdca` CLI command to initialize your project:
 
 ```bash
 # Create a new project directory
@@ -37,7 +37,7 @@ uvx --from git+https://github.com/github/pdca-kit.git pdca init .
 > pipx install git+https://github.com/github/pdca-kit.git
 > ```
 >
-> After installing with `pipx`, run `specify` directly instead of `uvx --from ... specify`, for example:
+> After installing with `pipx`, run `pdca` directly instead of `uvx --from ... pdca`, for example:
 >
 > ```bash
 > pdca init <PROJECT_NAME>

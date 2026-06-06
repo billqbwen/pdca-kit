@@ -3,7 +3,7 @@
 
 # Find repository root by searching upward for .pdca directory
 # This is the primary marker for pdca-kit projects
-find_specify_root() {
+find_pdca_root() {
     local dir="${1:-$(pwd)}"
     # Normalize to absolute path to prevent infinite loop with relative paths
     # Use -- to handle paths starting with - (e.g., -P, -L)
@@ -28,9 +28,9 @@ find_specify_root() {
 # This prevents using a parent git repo when pdca-kit is initialized in a subdirectory
 get_repo_root() {
     # First, look for .pdca directory (pdca-kit's own marker)
-    local specify_root
-    if specify_root=$(find_specify_root); then
-        echo "$specify_root"
+    local pdca_root
+    if pdca_root=$(find_pdca_root); then
+        echo "$pdca_root"
         return
     fi
 
@@ -131,7 +131,7 @@ check_feature_branch() {
 
     # For non-git repos, we can't enforce branch naming but still provide output
     if [[ "$has_git_repo" != "true" ]]; then
-        echo "[specify] Warning: Git repository not detected; skipped branch validation" >&2
+        echo "[pdca-kit] Warning: Git repository not detected; skipped branch validation" >&2
         return 0
     fi
 

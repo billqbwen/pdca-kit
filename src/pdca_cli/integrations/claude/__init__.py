@@ -13,7 +13,7 @@ from ..manifest import IntegrationManifest
 # Mapping of command template stem → argument-hint text shown inline
 # when a user invokes the slash command in Claude Code.
 ARGUMENT_HINTS: dict[str, str] = {
-    "specify": "Describe the feature you want to specify",
+    "define": "Describe the feature you want to specify",
     "plan": "Optional guidance for the planning phase",
     "tasks": "Optional task generation constraints",
     "implement": "Optional implementation guidance or task filter",

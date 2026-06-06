@@ -19,6 +19,6 @@ PDCA Kit is a toolkit for spec-driven development. At its core, it is a coordina
 | ------------------ | ------------------------------------------------------------------------------------------- |
 | `templates/`       | Prompt assets and templates that define the core workflow behavior and generated artifacts. |
 | `scripts/`         | Supporting scripts used by the workflow, setup, and repository tooling.                     |
-| `src/pdca_cli/` | Python source for the `specify` CLI, including agent-specific assets.                       |
+| `src/pdca_cli/` | Python source for the `pdca` CLI, including agent-specific assets.                       |
 | `extensions/`      | Extension-related docs, catalogs, and supporting assets.                                    |
 | `presets/`         | Preset-related docs, catalogs, and supporting assets.                                       |

@@ -39,7 +39,7 @@ Run directly without installing — see the [One-time usage (uvx)](install/one-t
 - **pipx** — see the [pipx installation guide](install/pipx.md)
 - **Enterprise / Air-Gapped** — see the [air-gapped installation guide](install/air-gapped.md)
 
-### Specify Integration
+### Integration Selection
 
 Interactive terminals prompt you to choose a coding agent integration during initialization. Non-interactive sessions, such as CI or piped runs, default to GitHub Copilot unless you pass `--integration`.
 

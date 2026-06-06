@@ -37,14 +37,14 @@ On [GitHub Codespaces](https://github.com/features/codespaces) it's even simpler
 
 1. Fork and clone the repository
 1. Configure and install the dependencies: `uv sync --extra test`
-1. Make sure the CLI works on your machine: `uv run specify --help`
+1. Make sure the CLI works on your machine: `uv run pdca --help`
 1. Create a new branch: `git checkout -b <type>/<number>-<short-slug>` (see [Branch naming](#branch-naming) below)
 1. Make your change, add tests, and make sure everything still works
 1. Test the CLI functionality with a sample project if relevant
 1. Push to your fork and submit a pull request
 1. Wait for your pull request to be reviewed and merged.
 
-Activate the project virtual environment (see [Testing setup](#testing-setup) below), then install the CLI from your working tree (`uv pip install -e .` after `uv sync --extra test`) or otherwise ensure the shell uses the local `specify` binary before running the manual slash-command tests described below.
+Activate the project virtual environment (see [Testing setup](#testing-setup) below), then install the CLI from your working tree (`uv pip install -e .` after `uv sync --extra test`) or otherwise ensure the shell uses the local `pdca` binary before running the manual slash-command tests described below.
 
 Here are a few things you can do that will increase the likelihood of your pull request being accepted:
 
@@ -73,7 +73,7 @@ Including the issue or PR number makes branches traceable — especially useful 
 
 When working on pdca-kit:
 
-1. Test changes with the `specify` CLI commands (`/pdca.define`, `/pdca.plan`, `/pdca.tasks`) in your coding agent of choice
+1. Test changes with the `pdca` CLI commands (`/pdca.define`, `/pdca.plan`, `/pdca.tasks`) in your coding agent of choice
 2. Verify templates are working correctly in `templates/` directory
 3. Test script functionality in the `scripts/` directory
 4. Ensure memory files (`memory/constitution.md`) are updated if major process changes are made
@@ -105,7 +105,7 @@ cd <pdca-kit-repo>
 uv sync --extra test
 source .venv/bin/activate  # On Windows (CMD): .venv\Scripts\activate  |  (PowerShell): .venv\Scripts\Activate.ps1
 uv pip install -e .
-# Ensure the `specify` binary in this environment points at your working tree so the agent runs the branch you're testing.
+# Ensure the `pdca` binary in this environment points at your working tree so the agent runs the branch you're testing.
 
 # Initialize a test project using your local changes
 uv run pdca init <temp-dir>/pdca-test --integration <agent>

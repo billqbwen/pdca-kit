@@ -17,12 +17,12 @@
 
 ## Part 1: Upgrade the CLI Tool
 
-The CLI tool (`specify`) is separate from your project files. Upgrade it to get the latest features and bug fixes.
+The CLI tool (`pdca`) is separate from your project files. Upgrade it to get the latest features and bug fixes.
 
 Before upgrading, you can check whether a newer released version is available:
 
 ```bash
-specify self check
+pdca self check
 ```
 
 ### If you installed with `uv tool install`
@@ -41,7 +41,7 @@ Specify the desired release tag:
 uvx --from git+https://github.com/github/pdca-kit.git@vX.Y.Z pdca init --here --integration copilot
 ```
 
-`uvx` runs a temporary copy of PDCA Kit for that single command. It does not update a persistent `specify` installed with `uv tool install`, `pipx`, or another tool manager. If a newer feature works through `uvx` but your local `specify` still reports an older version, upgrade the persistent CLI with the command that matches your install method.
+`uvx` runs a temporary copy of PDCA Kit for that single command. It does not update a persistent `pdca` installed with `uv tool install`, `pipx`, or another tool manager. If a newer feature works through `uvx` but your local `pdca` still reports an older version, upgrade the persistent CLI with the command that matches your install method.
 
 ### If you installed with `pipx`
 
@@ -391,10 +391,10 @@ Only PDCA Kit infrastructure files:
 If a command behaves like an older PDCA Kit version, first check for local CLI drift:
 
 ```bash
-specify self check
+pdca self check
 ```
 
-`pdca check` is an offline environment scan; `specify self check` is the CLI version lookup.
+`pdca check` is an offline environment scan; `pdca self check` is the CLI version lookup.
 
 Verify the installation:
 
@@ -405,7 +405,7 @@ uv tool list
 # Should show pdca-cli
 
 # Verify path
-which specify
+which pdca
 
 # Should point to the uv tool installation directory
 ```
@@ -417,19 +417,19 @@ uv tool uninstall pdca-cli
 uv tool install pdca-cli --from git+https://github.com/github/pdca-kit.git
 ```
 
-### "Do I need to run specify every time I open my project?"
+### "Do I need to run pdca every time I open my project?"
 
 **Short answer:** No, you only run `pdca init` once per project (or when upgrading).
 
 **Explanation:**
 
-The `specify` CLI tool is used for:
+The `pdca` CLI tool is used for:
 
 - **Initial setup:** `pdca init` to bootstrap PDCA Kit in your project
 - **Upgrades:** `pdca init --here --force` to update templates and commands
 - **Diagnostics:** `pdca check` to verify tool installation
 
-Once you've run `pdca init`, the slash commands (like `/pdca.define`, `/pdca.plan`, etc.) are **permanently installed** in your project's agent folder (`.claude/`, `.github/prompts/`, `.pi/prompts/`, etc.). Your AI coding agent reads these command files directly—no need to run `specify` again.
+Once you've run `pdca init`, the slash commands (like `/pdca.define`, `/pdca.plan`, etc.) are **permanently installed** in your project's agent folder (`.claude/`, `.github/prompts/`, `.pi/prompts/`, etc.). Your AI coding agent reads these command files directly—no need to run `pdca` again.
 
 **If your agent isn't recognizing slash commands:**
 
@@ -452,7 +452,7 @@ Once you've run `pdca init`, the slash commands (like `/pdca.define`, `/pdca.pla
 
 4. **For some agents**, you may need to reload the workspace or clear cache
 
-**Related issue:** If Copilot can't open local files or uses PowerShell commands unexpectedly, this is typically an IDE context issue, not related to `specify`. Try:
+**Related issue:** If Copilot can't open local files or uses PowerShell commands unexpectedly, this is typically an IDE context issue, not related to `pdca`. Try:
 
 - Restarting VS Code
 - Checking file permissions

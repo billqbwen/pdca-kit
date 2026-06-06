@@ -235,7 +235,7 @@ if ($ShortName) {
 
 # Warn if -Number and -Timestamp are both specified
 if ($Timestamp -and $Number -ne 0) {
-    Write-Warning "[specify] Warning: -Number is ignored when -Timestamp is used"
+    Write-Warning "[pdca-kit] Warning: -Number is ignored when -Timestamp is used"
     $Number = 0
 }
 
@@ -282,9 +282,9 @@ if ($branchName.Length -gt $maxBranchLength) {
     $originalBranchName = $branchName
     $branchName = "$featureNum-$truncatedSuffix"
 
-    Write-Warning "[specify] Branch name exceeded GitHub's 244-byte limit"
-    Write-Warning "[specify] Original: $originalBranchName ($($originalBranchName.Length) bytes)"
-    Write-Warning "[specify] Truncated to: $branchName ($($branchName.Length) bytes)"
+    Write-Warning "[pdca-kit] Branch name exceeded GitHub's 244-byte limit"
+    Write-Warning "[pdca-kit] Original: $originalBranchName ($($originalBranchName.Length) bytes)"
+    Write-Warning "[pdca-kit] Truncated to: $branchName ($($branchName.Length) bytes)"
 }
 
 $featureDir = Join-Path $specsDir $branchName
@@ -342,7 +342,7 @@ if (-not $DryRun) {
             }
         }
     } else {
-        Write-Warning "[specify] Warning: Git repository not detected; skipped branch creation for $branchName"
+        Write-Warning "[pdca-kit] Warning: Git repository not detected; skipped branch creation for $branchName"
     }
 
     New-Item -ItemType Directory -Path $featureDir -Force | Out-Null

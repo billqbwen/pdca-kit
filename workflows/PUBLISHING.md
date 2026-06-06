@@ -72,7 +72,7 @@ inputs:
     enum: ["full", "backend-only", "frontend-only"]
 
 steps:
-  - id: specify
+  - id: define
     command: pdca.define
     input:
       args: "{{ inputs.spec }}"

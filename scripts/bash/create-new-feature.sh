@@ -267,7 +267,7 @@ fi
 
 # Warn if --number and --timestamp are both specified
 if [ "$USE_TIMESTAMP" = true ] && [ -n "$BRANCH_NUMBER" ]; then
-    >&2 echo "[specify] Warning: --number is ignored when --timestamp is used"
+    >&2 echo "[pdca-kit] Warning: --number is ignored when --timestamp is used"
     BRANCH_NUMBER=""
 fi
 
@@ -317,9 +317,9 @@ if [ ${#BRANCH_NAME} -gt $MAX_BRANCH_LENGTH ]; then
     ORIGINAL_BRANCH_NAME="$BRANCH_NAME"
     BRANCH_NAME="${FEATURE_NUM}-${TRUNCATED_SUFFIX}"
     
-    >&2 echo "[specify] Warning: Branch name exceeded GitHub's 244-byte limit"
-    >&2 echo "[specify] Original: $ORIGINAL_BRANCH_NAME (${#ORIGINAL_BRANCH_NAME} bytes)"
-    >&2 echo "[specify] Truncated to: $BRANCH_NAME (${#BRANCH_NAME} bytes)"
+    >&2 echo "[pdca-kit] Warning: Branch name exceeded GitHub's 244-byte limit"
+    >&2 echo "[pdca-kit] Original: $ORIGINAL_BRANCH_NAME (${#ORIGINAL_BRANCH_NAME} bytes)"
+    >&2 echo "[pdca-kit] Truncated to: $BRANCH_NAME (${#BRANCH_NAME} bytes)"
 fi
 
 FEATURE_DIR="$SPECS_DIR/$BRANCH_NAME"
@@ -362,7 +362,7 @@ if [ "$DRY_RUN" != true ]; then
             fi
         fi
     else
-        >&2 echo "[specify] Warning: Git repository not detected; skipped branch creation for $BRANCH_NAME"
+        >&2 echo "[pdca-kit] Warning: Git repository not detected; skipped branch creation for $BRANCH_NAME"
     fi
 
     mkdir -p "$FEATURE_DIR"

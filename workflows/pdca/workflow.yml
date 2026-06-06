@@ -4,7 +4,7 @@ workflow:
   name: "Full SDD Cycle"
   version: "1.0.0"
   author: "GitHub"
-  description: "Runs specify → plan → tasks → implement with review gates"
+  description: "Runs define → plan → tasks → implement with review gates"
 
 requires:
   # 0.8.5 is the first release with engine-side resolution of the
@@ -12,7 +12,7 @@ requires:
   # as a literal integration key and fail at dispatch.
   pdca_version: ">=0.8.5"
   integrations:
-    # The four commands below (specify, plan, tasks, implement) are core
+    # The four commands below (define, plan, tasks, implement) are core
     # pdca-kit commands provided by every integration. The list here is an
     # advisory, non-exhaustive compatibility hint following the documented
     # ``any: [...]`` schema -- it is NOT a closed set. The workflow runs
@@ -40,7 +40,7 @@ inputs:
     enum: ["full", "backend-only", "frontend-only"]
 
 steps:
-  - id: specify
+  - id: define
     command: pdca.define
     integration: "{{ inputs.integration }}"
     input:

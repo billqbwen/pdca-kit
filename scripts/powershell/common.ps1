@@ -3,7 +3,7 @@
 
 # Find repository root by searching upward for .pdca directory
 # This is the primary marker for pdca-kit projects
-function Find-SpecifyRoot {
+function Find-PdcaRoot {
     param([string]$StartDir = (Get-Location).Path)
 
     # Normalize to absolute path to prevent issues with relative paths
@@ -28,9 +28,9 @@ function Find-SpecifyRoot {
 # This prevents using a parent git repo when pdca-kit is initialized in a subdirectory
 function Get-RepoRoot {
     # First, look for .pdca directory (pdca-kit's own marker)
-    $specifyRoot = Find-SpecifyRoot
+    $pdcaRoot = Find-PdcaRoot
     if ($specifyRoot) {
-        return $specifyRoot
+        return $pdcaRoot
     }
 
     # Fallback to git if no .pdca found
@@ -145,7 +145,7 @@ function Test-FeatureBranch {
     
     # For non-git repos, we can't enforce branch naming but still provide output
     if (-not $HasGit) {
-        Write-Warning "[specify] Warning: Git repository not detected; skipped branch validation"
+        Write-Warning "[pdca-kit] Warning: Git repository not detected; skipped branch validation"
         return $true
     }
 
@@ -199,7 +199,7 @@ function Test-FeatureJsonMatchesFeatureDir {
 
     # Resolve both paths to canonical absolute form. Prefer Resolve-Path (follows
     # symlinks and is the canonical PS way); fall back to [Path]::GetFullPath when
-    # Resolve-Path can't produce a value. Mirrors the pattern used by Find-SpecifyRoot.
+    # Resolve-Path can't produce a value. Mirrors the pattern used by Find-PdcaRoot.
     $resolvedJson = Resolve-Path -LiteralPath $fd -ErrorAction SilentlyContinue
     if ($resolvedJson) {
         $normJson = $resolvedJson.Path

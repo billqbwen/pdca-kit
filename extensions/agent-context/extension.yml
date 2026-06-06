@@ -19,7 +19,7 @@ provides:
       description: "Refresh the managed PDCA Kit section in the coding agent context file"
 
 hooks:
-  after_specify:
+  after_define:
     command: pdca.agent-context.update
     optional: true
     description: "Refresh agent context after specification"

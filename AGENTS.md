@@ -1,6 +1,6 @@
 # AGENTS.md
 
-## About PDCA Kit and Specify
+## About PDCA Kit
 
 **GitHub PDCA Kit** is a comprehensive toolkit for implementing Spec-Driven Development (SDD) - a methodology that emphasizes creating clear specifications before implementation. The toolkit includes templates, scripts, and workflows that guide development teams through a structured approach to building software.
 
@@ -75,7 +75,7 @@ class WindsurfIntegration(MarkdownIntegration):
         "args": "$ARGUMENTS",
         "extension": ".md",
     }
-    context_file = ".windsurf/rules/specify-rules.md"
+    context_file = ".windsurf/rules/pdca-rules.md"
 ```
 
 **TOML agent (Gemini):**
@@ -185,11 +185,11 @@ context_file: CLAUDE.md
 
 # Delimiters for the managed PDCA Kit section
 context_markers:
-  start: "<!-- SPECKIT START -->"
-  end: "<!-- SPECKIT END -->"
+  start: "<!-- PDCA START -->"
+  end: "<!-- PDCA END -->"
 ```
 
-- `context_file` is written automatically from the integration's class attribute when `pdca init` or `specify integration use` is run.
+- `context_file` is written automatically from the integration's class attribute when `pdca init` or `pdca integration use` is run.
 - `context_markers.{start,end}` defaults to `IntegrationBase.CONTEXT_MARKER_START` / `CONTEXT_MARKER_END`. Users who want custom markers edit `agent-context-config.yml` directly — both the Python layer (`upsert_context_section()` / `remove_context_section()`) and the bundled scripts (`extensions/agent-context/scripts/bash/update-agent-context.sh` and `.ps1`) read from this single source of truth.
 
 Users can opt out entirely with `pdca extension disable agent-context`; while disabled, PDCA Kit skips context-file creation, updates, and removal (the gates are inside `upsert_context_section()` and `remove_context_section()`).
@@ -207,7 +207,7 @@ pdca init my-project --integration <key>
 ls -R my-project/.windsurf/workflows/
 
 # Uninstall cleanly
-cd my-project && specify integration uninstall <key>
+cd my-project && pdca integration uninstall <key>
 ```
 
 Each integration also has a dedicated test file at `tests/integrations/test_integration_<key>.py`. Note that hyphens in the key are replaced with underscores in the filename (e.g., key `cursor-agent` → `test_integration_cursor_agent.py`, key `kiro-cli` → `test_integration_kiro_cli.py`). Run it with:

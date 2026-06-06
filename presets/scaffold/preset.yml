@@ -69,8 +69,8 @@ provides:
     # Wrap a command with preamble/sign-off:
     # - type: "command"
     #   name: "pdca.define"
-    #   file: "commands/specify-wrapper.md"
-    #   description: "Wrap specify command with compliance checks"
+    #   file: "commands/define-wrapper.md"
+    #   description: "Wrap define command with compliance checks"
     #   strategy: "wrap"
     #   # In the wrapper file, use {CORE_TEMPLATE} where the original content goes
 

@@ -51,7 +51,7 @@ if (Test-Path $paths.QUICKSTART) { $docs += 'quickstart.md' }
 $tasksTemplate = Resolve-Template -TemplateName 'tasks-template' -RepoRoot $paths.REPO_ROOT
 if (-not $tasksTemplate -or -not (Test-Path -LiteralPath $tasksTemplate -PathType Leaf)) {
     $expectedCoreTemplate = Join-Path $paths.REPO_ROOT '.pdca/templates/tasks-template.md'
-    [Console]::Error.WriteLine("ERROR: Tasks template not found for repository root: $($paths.REPO_ROOT)`nTemplate resolution order: overrides -> presets -> extensions -> core.`nExpected shared/core template location: $expectedCoreTemplate`nTo continue, verify whether 'tasks-template.md' is available in '.pdca/templates/overrides/', preset templates, extension templates, or restore the shared/core templates (for example by re-running 'specify init') so that '.pdca/templates/tasks-template.md' exists.")
+    [Console]::Error.WriteLine("ERROR: Tasks template not found for repository root: $($paths.REPO_ROOT)`nTemplate resolution order: overrides -> presets -> extensions -> core.`nExpected shared/core template location: $expectedCoreTemplate`nTo continue, verify whether 'tasks-template.md' is available in '.pdca/templates/overrides/', preset templates, extension templates, or restore the shared/core templates (for example by re-running 'pdca init') so that '.pdca/templates/tasks-template.md' exists.")
     exit 1
 }
 $tasksTemplate = (Resolve-Path -LiteralPath $tasksTemplate).Path

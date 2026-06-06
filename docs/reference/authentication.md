@@ -175,7 +175,7 @@ A reference `auth.json` with GitHub pre-configured:
 To use it:
 
 ```bash
-mkdir -p ~/.specify
+mkdir -p ~/.pdca
 # Copy the JSON above into ~/.pdca/auth.json
 chmod 600 ~/.pdca/auth.json
 ```

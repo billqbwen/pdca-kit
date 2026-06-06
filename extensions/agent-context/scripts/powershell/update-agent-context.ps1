@@ -53,8 +53,8 @@ function Test-ConfigObject {
 }
 
 $ErrorActionPreference = 'Stop'
-$DefaultStart = '<!-- SPECKIT START -->'
-$DefaultEnd   = '<!-- SPECKIT END -->'
+$DefaultStart = '<!-- PDCA START -->'
+$DefaultEnd   = '<!-- PDCA END -->'
 $ProjectRoot  = (Get-Location).Path
 $ExtConfig    = Join-Path $ProjectRoot '.pdca/extensions/agent-context/agent-context-config.yml'
 

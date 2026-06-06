@@ -1,6 +1,6 @@
 # CLI Reference
 
-The PDCA CLI (`specify`) manages the full lifecycle of Spec-Driven Development — from project initialization to workflow automation.
+The PDCA CLI (`pdca`) manages the full lifecycle of Spec-Driven Development — from project initialization to workflow automation.
 
 ## Core Commands
 
