@@ -1,16 +1,25 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-04-13T00:00:00Z",
+  "updated_at": "2026-06-06T08:00:00Z",
   "catalog_url": "https://raw.githubusercontent.com/github/pdca-kit/main/workflows/catalog.json",
   "workflows": {
     "pdca": {
       "id": "pdca",
       "name": "Full SDD Cycle",
-      "description": "Runs define \u2192 plan \u2192 tasks \u2192 implement with review gates",
+      "description": "Runs define → plan → tasks → implement with review gates",
       "author": "GitHub",
       "version": "1.0.0",
       "url": "https://raw.githubusercontent.com/github/pdca-kit/main/workflows/pdca/workflow.yml",
       "tags": ["sdd", "full-cycle"]
+    },
+    "aicicd": {
+      "id": "aicicd",
+      "name": "AI-Powered CICD Pipeline",
+      "description": "Intelligent CI/CD with AI build analysis, auto-fix, test analysis, deploy decision, and canary release",
+      "author": "AIDev Team",
+      "version": "1.0.0",
+      "url": "file:///Users/billwen/swd/sdd/pdca-kit/workflows/aicicd/workflow.yml",
+      "tags": ["cicd", "ai", "devops", "auto-fix"]
     }
   }
 }
