@@ -10,7 +10,7 @@ Built-in integrations are maintained by the PDCA Kit core team and ship with the
 
 1. **Create the integration subpackage** under `src/pdca_cli/integrations/<package_dir>/`
    — `<package_dir>` matches the integration key when it contains no hyphens (e.g., `gemini`), or replaces hyphens with underscores when it does (e.g., key `cursor-agent` → directory `cursor_agent/`, key `kiro-cli` → directory `kiro_cli/`). Python package names cannot use hyphens.
-2. **Implement the integration class** extending `MarkdownIntegration`, `TomlIntegration`, or `SkillsIntegration`
+2. **Implement the integration class** extending `MarkdownIntegration`, `TomlIntegration`, `YamlIntegration`, or `SkillsIntegration`
 3. **Register the integration** in `src/pdca_cli/integrations/__init__.py`
 4. **Add tests** under `tests/integrations/test_integration_<package_dir>.py`
 5. **Add a catalog entry** in `integrations/catalog.json`
@@ -45,17 +45,17 @@ Community integrations are contributed by external developers and listed in `int
 
 1. **Working integration** — tested with `pdca integration install`
 2. **Public repository** — hosted on GitHub or similar
-3. **`integration.yml` descriptor** — valid descriptor file (see below)
+3. **Extension descriptor** — valid `extension.yml` file (see the [Extension API Reference](../extensions/EXTENSION-API-REFERENCE.md) for the full schema)
 4. **Documentation** — README with usage instructions
 5. **License** — open source license file
 
-### `integration.yml` Descriptor
+### `extension.yml` Descriptor
 
-Every community integration must include an `integration.yml`:
+Every community integration must include an `extension.yml`:
 
 ```yaml
 schema_version: "1.0"
-integration:
+extension:
   id: "my-agent"
   name: "My Agent"
   version: "1.0.0"
@@ -82,8 +82,8 @@ provides:
 | Field | Rule |
 |-------|------|
 | `schema_version` | Must be `"1.0"` |
-| `integration.id` | Lowercase alphanumeric + hyphens (`^[a-z0-9-]+$`) |
-| `integration.version` | Valid PEP 440 version (parsed with `packaging.version.Version()`) |
+| `extension.id` | Lowercase alphanumeric + hyphens (`^[a-z0-9-]+$`) |
+| `extension.version` | Valid PEP 440 version (parsed with `packaging.version.Version()`) |
 | `requires.pdca_version` | Required field; specify a version constraint such as `>=0.6.0` (current validation checks presence only) |
 | `provides` | Must include at least one command or script |
 | `provides.commands[].name` | String identifier |
@@ -114,7 +114,7 @@ provides:
 3. **Open a pull request** with:
    - Your catalog entry
    - Link to your integration repository
-   - Confirmation that `integration.yml` is valid
+   - Confirmation that `extension.yml` is valid
 
 ### Version Updates
 

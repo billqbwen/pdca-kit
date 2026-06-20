@@ -490,7 +490,6 @@ class WorkflowEngine:
         run_dir = self.project_root / ".pdca" / "workflows" / "runs" / state.run_id
         run_dir.mkdir(parents=True, exist_ok=True)
         workflow_copy = run_dir / "workflow.yml"
-        import yaml
         with open(workflow_copy, "w", encoding="utf-8") as f:
             yaml.safe_dump(definition.data, f, sort_keys=False)
 

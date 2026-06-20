@@ -65,13 +65,13 @@ class ShellStep(StepBase):
             return StepResult(
                 status=StepStatus.FAILED,
                 error="Shell command timed out after 300 seconds.",
-                output={"exit_code": -1, "stdout": "", "stderr": "timeout"},
+                output={"exit_code": 124, "stdout": "", "stderr": "timeout"},
             )
         except OSError as exc:
             return StepResult(
                 status=StepStatus.FAILED,
                 error=f"Shell command failed: {exc}",
-                output={"exit_code": -1, "stdout": "", "stderr": str(exc)},
+                output={"exit_code": 1, "stdout": "", "stderr": str(exc)},
             )
 
     def validate(self, config: dict[str, Any]) -> list[str]:

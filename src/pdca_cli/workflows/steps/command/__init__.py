@@ -130,8 +130,10 @@ class CommandStep(StepBase):
         if impl.build_exec_args("test") is None:
             return None
 
-        # Check if the CLI tool is actually installed
-        if not shutil.which(impl.key):
+        # Check if the CLI tool is actually installed.
+        # Use _resolve_executable() so env-var overrides (PDCA_INTEGRATION_<KEY>_EXECUTABLE)
+        # are respected, matching how dispatch_command() resolves the binary.
+        if not shutil.which(impl._resolve_executable()):
             return None
 
         project_root = Path(context.project_root) if context.project_root else None

@@ -21,10 +21,9 @@ class PromptStep(StepBase):
 
     .. note::
 
-        CLI output is streamed to the terminal for live progress.
-        ``output.exit_code`` is always captured and can be referenced
-        by later steps.  Full response text capture is a planned
-        enhancement.
+        CLI output is captured and available as ``output.stdout`` /
+        ``output.stderr`` for downstream steps.  ``output.exit_code``
+        is always captured and can be referenced by later steps.
 
     Example YAML::
 
@@ -118,7 +117,7 @@ class PromptStep(StepBase):
         if exec_args is None:
             return None
 
-        if not shutil.which(impl.key):
+        if not shutil.which(impl._resolve_executable()):
             return None
 
         import subprocess
@@ -130,14 +129,15 @@ class PromptStep(StepBase):
         try:
             result = subprocess.run(
                 exec_args,
+                capture_output=True,
                 text=True,
                 cwd=str(project_root),
                 timeout=600,
             )
             return {
                 "exit_code": result.returncode,
-                "stdout": "",
-                "stderr": "",
+                "stdout": result.stdout or "",
+                "stderr": result.stderr or "",
             }
         except subprocess.TimeoutExpired:
             return {

@@ -18,7 +18,7 @@
       "description": "Intelligent CI/CD with AI build analysis, auto-fix, test analysis, deploy decision, and canary release",
       "author": "AIDev Team",
       "version": "1.0.0",
-      "url": "file:///Users/billwen/swd/sdd/pdca-kit/workflows/aicicd/workflow.yml",
+      "url": "https://raw.githubusercontent.com/github/pdca-kit/main/workflows/aicicd/workflow.yml",
       "tags": ["cicd", "ai", "devops", "auto-fix"]
     }
   }

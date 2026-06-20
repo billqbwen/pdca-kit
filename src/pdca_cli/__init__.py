@@ -27,7 +27,6 @@ Or install globally:
 """
 
 import os
-import os
 import sys
 import tempfile
 import zipfile

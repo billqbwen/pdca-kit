@@ -40,7 +40,7 @@ _FALLBACK_CORE_COMMAND_NAMES = frozenset({
 })
 EXTENSION_COMMAND_NAME_PATTERN = re.compile(r"^pdca\.([a-z0-9-]+)\.([a-z0-9-]+)$")
 
-REINSTALL_COMMAND = "uv tool install pdca-cli --force --from git+https://github.com/github/pdca-kit.git"
+REINSTALL_COMMAND = "pip install --force-reinstall pdca-cli  # or: uv tool install pdca-cli --force --from git+https://github.com/github/pdca-kit.git"
 
 
 def _load_core_command_names() -> frozenset[str]:
@@ -405,10 +405,21 @@ class ExtensionRegistry:
             }
 
     def _save(self):
-        """Save registry to disk."""
+        """Save registry to disk atomically using mkstemp + os.replace."""
+        import tempfile
+
         self.extensions_dir.mkdir(parents=True, exist_ok=True)
-        with open(self.registry_path, 'w') as f:
-            json.dump(self.data, f, indent=2)
+        fd, tmp = tempfile.mkstemp(
+            prefix=f".{self.REGISTRY_FILE}.", dir=self.extensions_dir
+        )
+        try:
+            with os.fdopen(fd, "w") as f:
+                json.dump(self.data, f, indent=2)
+            os.replace(tmp, self.registry_path)
+        except BaseException:
+            if Path(tmp).exists():
+                Path(tmp).unlink(missing_ok=True)
+            raise
 
     def add(self, extension_id: str, metadata: dict):
         """Add extension to registry.
@@ -1075,7 +1086,7 @@ class ExtensionManager:
                             )
                     if source != f"extension:{extension_id}":
                         continue
-                except (OSError, UnicodeDecodeError, Exception):
+                except (OSError, UnicodeDecodeError):
                     continue
                 shutil.rmtree(skill_subdir)
         else:
@@ -1150,7 +1161,12 @@ class ExtensionManager:
             CompatibilityError: If extension is incompatible
         """
         required = manifest.requires_pdca_version
-        current = pkg_version.Version(pdca_version)
+        try:
+            current = pkg_version.Version(pdca_version)
+        except pkg_version.InvalidVersion:
+            raise CompatibilityError(
+                f"Invalid pdca-kit version: {pdca_version!r}."
+            )
 
         # Parse version specifier (e.g., ">=0.1.0,<2.0.0")
         try:
@@ -1283,14 +1299,25 @@ class ExtensionManager:
             with zipfile.ZipFile(zip_path, 'r') as zf:
                 # Validate all paths first before extracting anything
                 temp_path_resolved = temp_path.resolve()
-                for member in zf.namelist():
-                    member_path = (temp_path / member).resolve()
-                    # Use is_relative_to for safe path containment check
+                for member_info in zf.infolist():
+                    # Reject ZIP entries that are symlinks — they bypass path
+                    # traversal checks because extractall() creates the symlink,
+                    # which can then point outside the extraction directory.
+                    is_symlink = (
+                        member_info.external_attr >> 16 & 0o120000
+                    ) == 0o120000
+                    if is_symlink:
+                        raise ValidationError(
+                            f"Unsafe symlink in ZIP archive: {member_info.filename}"
+                        )
+
+                    member_path = (temp_path / member_info.filename).resolve()
                     try:
                         member_path.relative_to(temp_path_resolved)
                     except ValueError:
                         raise ValidationError(
-                            f"Unsafe path in ZIP archive: {member} (potential path traversal)"
+                            f"Unsafe path in ZIP archive: {member_info.filename} "
+                            "(potential path traversal)"
                         )
                 # Only extract after all paths are validated
                 zf.extractall(temp_path)
@@ -1932,7 +1959,7 @@ class ExtensionCatalog(CatalogStackBase):
         if is_valid:
             try:
                 return json.loads(cache_file.read_text())
-            except json.JSONDecodeError:
+            except (json.JSONDecodeError, OSError):
                 pass
 
         # Fetch from network
@@ -2213,6 +2240,18 @@ class ExtensionCatalog(CatalogStackBase):
                 zip_data = response.read()
 
             zip_path.write_bytes(zip_data)
+
+            # Validate the downloaded content is a readable ZIP file before
+            # returning, so callers that use download_extension() directly
+            # (without going through install_from_zip) still catch corruption
+            # or truncated downloads early.
+            import zipfile as _zipfile
+            if not _zipfile.is_zipfile(zip_path):
+                zip_path.unlink(missing_ok=True)
+                raise ExtensionError(
+                    f"Downloaded file from {download_url} is not a valid ZIP archive."
+                )
+
             return zip_path
 
         except urllib.error.URLError as e:
@@ -2826,7 +2865,7 @@ class HookExecutor:
         condition = condition.strip()
 
         # Pattern: "config.key.path is set"
-        if match := re.match(r'config\.([a-z0-9_.]+)\s+is\s+set', condition, re.IGNORECASE):
+        if match := re.match(r'config\.([a-z0-9_.-]+)\s+is\s+set', condition, re.IGNORECASE):
             key_path = match.group(1)
             if not extension_id:
                 return False
@@ -2835,7 +2874,7 @@ class HookExecutor:
             return config_manager.has_value(key_path)
 
         # Pattern: "config.key.path == 'value'" or "config.key.path != 'value'"
-        if match := re.match(r'config\.([a-z0-9_.]+)\s*(==|!=)\s*["\']([^"\']+)["\']', condition, re.IGNORECASE):
+        if match := re.match(r'config\.([a-z0-9_.-]+)\s*(==|!=)\s*["\']([^"\']+)["\']', condition, re.IGNORECASE):
             key_path = match.group(1)
             operator = match.group(2)
             expected_value = match.group(3)

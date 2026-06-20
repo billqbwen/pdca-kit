@@ -116,6 +116,9 @@ def _ensure_safe_shared_directory(
         if not create:
             raise ValueError(f"{context.capitalize()} does not exist: {label}")
         current.mkdir()
+        # Post-creation symlink check (TOCTOU race is accepted here — an attacker
+        # who can replace a directory with a symlink between mkdir and this check
+        # can already write to that path; the check prevents accidental follow).
         if current.is_symlink():
             raise SymlinkedSharedPathError(f"Refusing to use symlinked {context}: {label}")
         try:
@@ -162,6 +165,10 @@ def _ensure_safe_shared_destination(
     if dest.is_symlink():
         raise SymlinkedSharedPathError(f"Refusing to overwrite symlinked shared infrastructure path: {label}")
 
+    # Reject existing directories — os.replace() raises IsADirectoryError.
+    if dest.is_dir():
+        raise ValueError(f"Shared infrastructure destination is a directory: {label}")
+
     if dest.exists():
         try:
             dest.resolve().relative_to(root)
@@ -187,6 +194,13 @@ def _write_shared_bytes(
         with os.fdopen(fd, "wb") as fh:
             fh.write(content)
         temp_path.chmod(mode)
+        # Re-check destination safety right before os.replace to narrow the
+        # TOCTOU window — an attacker who swapped dest for a symlink between
+        # the first check and now could otherwise trick os.replace into following
+        # the link. This is defense-in-depth: the temp file in the same directory
+        # means the race window is microsecond-scale, and os.replace on POSIX
+        # is an atomic rename that only follows the final component (which we
+        # verified is not a symlink above).
         _ensure_safe_shared_destination(project_path, dest)
         os.replace(temp_path, dest)
     finally:
@@ -272,6 +286,8 @@ def install_shared_infra(
     customization warning to tell the user which flag would overwrite their
     customizations.
     """
+    # Same-package private import: _sha256 is defined in integrations/manifest.py
+    # (module-internal per convention, reused here to keep hash logic in one place).
     from .integrations.manifest import _sha256
 
     manifest = load_pdca_manifest(project_path, version=version, console=console)

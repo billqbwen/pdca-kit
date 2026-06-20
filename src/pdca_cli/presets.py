@@ -569,7 +569,12 @@ class PresetManager:
             PresetCompatibilityError: If pack is incompatible
         """
         required = manifest.requires_pdca_version
-        current = pkg_version.Version(pdca_version)
+        try:
+            current = pkg_version.Version(pdca_version)
+        except pkg_version.InvalidVersion:
+            raise PresetCompatibilityError(
+                f"Invalid pdca-kit version: {pdca_version!r}."
+            )
 
         try:
             specifier = SpecifierSet(required)
@@ -1642,13 +1647,24 @@ class PresetManager:
 
             with zipfile.ZipFile(zip_path, 'r') as zf:
                 temp_path_resolved = temp_path.resolve()
-                for member in zf.namelist():
-                    member_path = (temp_path / member).resolve()
+                for member_info in zf.infolist():
+                    # Reject ZIP entries that are symlinks — they bypass path
+                    # traversal checks because extractall() creates the symlink,
+                    # which can then point outside the extraction directory.
+                    is_symlink = (
+                        member_info.external_attr >> 16 & 0o120000
+                    ) == 0o120000
+                    if is_symlink:
+                        raise PresetValidationError(
+                            f"Unsafe symlink in ZIP archive: {member_info.filename}"
+                        )
+
+                    member_path = (temp_path / member_info.filename).resolve()
                     try:
                         member_path.relative_to(temp_path_resolved)
                     except ValueError:
                         raise PresetValidationError(
-                            f"Unsafe path in ZIP archive: {member} "
+                            f"Unsafe path in ZIP archive: {member_info.filename} "
                             "(potential path traversal)"
                         )
                 zf.extractall(temp_path)
@@ -2088,7 +2104,7 @@ class PresetCatalog:
 
             return catalog_data
 
-        except (ImportError, Exception) as e:
+        except Exception as e:
             if isinstance(e, PresetError):
                 raise
             raise PresetError(
@@ -2184,7 +2200,7 @@ class PresetCatalog:
 
             return catalog_data
 
-        except (ImportError, Exception) as e:
+        except Exception as e:
             if isinstance(e, PresetError):
                 raise
             raise PresetError(

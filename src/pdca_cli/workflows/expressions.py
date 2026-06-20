@@ -6,8 +6,9 @@ No file I/O, no imports, no arbitrary code execution.
 
 from __future__ import annotations
 
+import os
 import re
-import sys
+import warnings
 from typing import Any
 
 
@@ -49,12 +50,16 @@ def _filter_map(value: Any, attr: str) -> list[Any]:
     return []
 
 
-def _filter_contains(value: Any, substring: str) -> bool:
-    """Check if a string or list contains *substring*."""
+def _filter_contains(value: Any, item: str) -> bool:
+    """Check if *value* contains *item*.
+
+    For strings, performs substring matching. For lists, performs
+    exact element membership.
+    """
     if isinstance(value, str):
-        return substring in value
+        return item in value
     if isinstance(value, list):
-        return substring in value
+        return item in value
     return False
 
 
@@ -81,10 +86,10 @@ def _resolve_dot_path(obj: Any, path: str) -> Any:
             else:
                 if isinstance(current, dict) and key not in current:
                     resolved = ".".join(parts[: i + 1])
-                    print(
-                        f"[warn] Expression path {resolved!r} not found "
+                    warnings.warn(
+                        f"Expression path {resolved!r} not found "
                         f"(key {key!r} missing from context)",
-                        file=sys.stderr,
+                        stacklevel=2,
                     )
                 return None
             if isinstance(current, list) and 0 <= idx < len(current):
@@ -96,18 +101,18 @@ def _resolve_dot_path(obj: Any, path: str) -> Any:
                 current = current[part]
             else:
                 resolved = ".".join(parts[: i + 1])
-                print(
-                    f"[warn] Expression path {resolved!r} not found "
+                warnings.warn(
+                    f"Expression path {resolved!r} not found "
                     f"(key {part!r} missing from context)",
-                    file=sys.stderr,
+                    stacklevel=2,
                 )
                 return None
         else:
             resolved = ".".join(parts[: i + 1])
-            print(
-                f"[warn] Expression path {resolved!r} not found "
+            warnings.warn(
+                f"Expression path {resolved!r} not found "
                 f"(intermediate value is not a dict)",
-                file=sys.stderr,
+                stacklevel=2,
             )
             return None
     return current
@@ -133,6 +138,12 @@ def _build_namespace(context: Any) -> dict[str, Any]:
     # any alphanumeric string with hyphens or underscores.
     run_id = getattr(context, "run_id", None) or ""
     ns["context"] = {"run_id": run_id}
+
+    # Environment variables for workflow templates that reference
+    # ``{{ env.VAR_NAME | default('fallback') }}``. Maps directly to
+    # ``os.environ`` so values come from the runtime environment.
+    ns["env"] = os.environ
+
     return ns
 
 

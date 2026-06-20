@@ -23,11 +23,21 @@ src/pdca_cli/integrations/
 │   └── __init__.py        #   ClaudeIntegration class
 ├── gemini/                # Example: TomlIntegration subclass
 │   └── __init__.py
+├── cursor_agent/          # Example: MarkdownIntegration (CLI-based)
+│   └── __init__.py
+├── devin/                 # Example: MarkdownIntegration (full lifecycle)
+│   └── __init__.py
+├── gemini/                # Example: TomlIntegration subclass
+│   └── __init__.py
+├── goose/                 # Example: YamlIntegration subclass
+│   └── __init__.py
 ├── windsurf/              # Example: MarkdownIntegration subclass
 │   └── __init__.py
 ├── copilot/               # Example: IntegrationBase subclass (custom setup)
 │   └── __init__.py
-└── ...                    # One subpackage per supported agent
+├── codex/                 # Example: SkillsIntegration (optional CLI)
+│   └── __init__.py
+└── ...                    # 33 subpackages — one per supported agent
 ```
 
 The registry is the **single source of truth for Python integration metadata**. Supported agents, their directories, formats, capabilities, and context files are derived from the integration classes for the Python integration layer.

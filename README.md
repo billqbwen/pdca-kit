@@ -129,6 +129,7 @@ Open the project in your AI coding agent and use the slash commands:
 - Run `pdca check` to verify your environment is set up correctly
 - Run `pdca preset list` to explore available presets
 - Run `pdca extension list` to see available extensions
+- Read the [Extension API Reference](extensions/EXTENSION-API-REFERENCE.md) for the extension manifest schema and hook system
 - Read the [User Guide](docs/user-guide.md) for installation, AI model configuration, and detailed usage instructions
 - Read the [full documentation](docs/) for detailed guidance
 
