@@ -21,7 +21,6 @@ from pathlib import Path
 from pdca_cli.extensions import (
     ExtensionManifest,
     ExtensionManager,
-    ExtensionError,
 )
 
 

@@ -269,10 +269,10 @@ class MarkdownIntegrationTests:
             files.append(f"{cmd_dir}/pdca.{stem}.md")
 
         # Framework files
-        files.append(f".pdca/integration.json")
-        files.append(f".pdca/init-options.json")
+        files.append(".pdca/integration.json")
+        files.append(".pdca/init-options.json")
         files.append(f".pdca/integrations/{self.KEY}.manifest.json")
-        files.append(f".pdca/integrations/pdca.manifest.json")
+        files.append(".pdca/integrations/pdca.manifest.json")
 
         if script_variant == "sh":
             for name in ["check-prerequisites.sh", "common.sh", "create-new-feature.sh",

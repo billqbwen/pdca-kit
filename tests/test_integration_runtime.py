@@ -1,6 +1,5 @@
 """Tests for pdca_cli.integration_runtime — runtime helpers for integration commands."""
 
-import pytest
 
 from pdca_cli.integration_runtime import (
     invoke_separator_for_integration,

@@ -4,7 +4,6 @@ import importlib.metadata
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 
 from pdca_cli._assets import (
     _locate_bundled_extension,

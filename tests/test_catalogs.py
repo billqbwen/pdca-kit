@@ -1,6 +1,5 @@
 """Tests for pdca_cli.catalogs — CatalogEntry and CatalogStackBase."""
 
-from pathlib import Path
 
 import pytest
 import yaml

@@ -2,7 +2,6 @@
 
 from io import StringIO
 
-import pytest
 from rich.console import Console
 
 from pdca_cli._console import StepTracker

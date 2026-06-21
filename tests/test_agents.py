@@ -5,9 +5,7 @@ This module adds coverage for parsing, rendering, name computation, and helper
 methods.
 """
 
-import errno
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 

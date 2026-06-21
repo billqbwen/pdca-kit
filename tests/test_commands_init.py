@@ -1,9 +1,7 @@
 """Tests for pdca_cli.commands.init — init command helpers."""
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 
 from pdca_cli.commands.init import (
     _build_ai_deprecation_warning,

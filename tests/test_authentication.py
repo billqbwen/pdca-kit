@@ -692,7 +692,6 @@ class TestLoadConfigCaching:
         """_load_config() should call load_auth_config only once per process."""
         from unittest.mock import patch
         from pdca_cli.authentication import http as _mod
-        from pdca_cli.authentication.config import AuthConfigEntry
         # Allow the real load path (no override)
         monkeypatch.setattr(_mod, "_config_override", None)
         monkeypatch.setattr(_mod, "_config_cache", None)

@@ -6,10 +6,9 @@ This module covers run_command, is_git_repo, init_git_repo, and
 _display_project_path.
 """
 
-import json
 import subprocess
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
