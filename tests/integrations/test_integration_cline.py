@@ -15,7 +15,7 @@ class TestClineCommandNameFormatter:
         """Test formatting a simple name without 'pdca.' prefix."""
         assert format_cline_command_name("plan") == "pdca-plan"
         assert format_cline_command_name("tasks") == "pdca-tasks"
-        assert format_cline_command_name("specify") == "pdca-specify"
+        assert format_cline_command_name("define") == "pdca-define"
 
     def test_name_with_pdca_prefix(self):
         """Test formatting a name that already has 'pdca.' prefix."""
@@ -47,7 +47,7 @@ class TestClineIntegration(MarkdownIntegrationTests):
     FOLDER = ".clinerules/"
     COMMANDS_SUBDIR = "workflows"
     REGISTRAR_DIR = ".clinerules/workflows"
-    CONTEXT_FILE = ".clinerules/specify-rules.md"
+    CONTEXT_FILE = ".clinerules/pdca-rules.md"
 
     @pytest.mark.parametrize(
         "cmd_name, expected_filename",
@@ -113,7 +113,7 @@ class TestClineIntegration(MarkdownIntegrationTests):
             assert f.name.endswith(".md")
 
         specify_file = next(
-            (f for f in cmd_files if f.name == "pdca-specify.md"), None
+            (f for f in cmd_files if f.name == "pdca-define.md"), None
         )
         assert specify_file is not None
         specify_contents = specify_file.read_text(encoding="utf-8")
@@ -206,15 +206,9 @@ class TestClineIntegration(MarkdownIntegrationTests):
         files.append(".pdca/workflows/pdca/workflow.yml")
         files.append(".pdca/workflows/workflow-registry.json")
 
-        # Bundled agent-context extension
-        files.append(".pdca/extensions.yml")
-        files.append(".pdca/extensions/.registry")
-        files.append(".pdca/extensions/agent-context/README.md")
+        # Agent-context config (always created by init, even with --ignore-agent-tools)
         files.append(".pdca/extensions/agent-context/agent-context-config.yml")
-        files.append(".pdca/extensions/agent-context/commands/pdca.agent-context.update.md")
-        files.append(".pdca/extensions/agent-context/extension.yml")
-        files.append(".pdca/extensions/agent-context/scripts/bash/update-agent-context.sh")
-        files.append(".pdca/extensions/agent-context/scripts/powershell/update-agent-context.ps1")
+        # (other bundled agent-context extension files omitted — --ignore-agent-tools skips them)
 
         # Agent context file (if set)
         if i.context_file:

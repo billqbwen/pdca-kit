@@ -41,7 +41,7 @@ fi
 
 if [[ ! -f "$FEATURE_SPEC" ]]; then
     echo "ERROR: spec.md not found in $FEATURE_DIR" >&2
-    echo "Run __PDCA_COMMAND_SPECIFY__ first to create the feature structure." >&2
+    echo "Run __PDCA_COMMAND_DEFINE__ first to create the feature structure." >&2
     exit 1
 fi
 

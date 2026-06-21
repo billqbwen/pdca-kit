@@ -4,7 +4,7 @@ description: "Create a feature branch with sequential or timestamp numbering"
 
 # Create Feature Branch
 
-Create and switch to a new git feature branch for the given specification. This command handles **branch creation only** — the spec directory and files are created by the core `__PDCA_COMMAND_SPECIFY__` workflow.
+Create and switch to a new git feature branch for the given specification. This command handles **branch creation only** — the spec directory and files are created by the core `__PDCA_COMMAND_DEFINE__` workflow.
 
 ## User Input
 

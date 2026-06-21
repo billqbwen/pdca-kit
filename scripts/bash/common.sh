@@ -262,7 +262,7 @@ get_feature_paths() {
 
     # Resolve feature directory.  Priority:
     #   1. PDCA_FEATURE_DIRECTORY env var (explicit override)
-    #   2. .pdca/feature.json "feature_directory" key (persisted by __PDCA_COMMAND_SPECIFY__)
+    #   2. .pdca/feature.json "feature_directory" key (persisted by __PDCA_COMMAND_DEFINE__)
     #   3. Branch-name-based prefix lookup (legacy fallback)
     local feature_dir
     if [[ -n "${PDCA_FEATURE_DIRECTORY:-}" ]]; then

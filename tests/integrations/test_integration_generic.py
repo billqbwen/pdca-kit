@@ -169,8 +169,8 @@ class TestGenericIntegration:
             ctx_path = tmp_path / i.context_file
             assert ctx_path.exists()
             content = ctx_path.read_text(encoding="utf-8")
-            assert "<!-- SPECKIT START -->" in content
-            assert "<!-- SPECKIT END -->" in content
+            assert "<!-- PDCA START -->" in content
+            assert "<!-- PDCA END -->" in content
 
     def test_plan_references_correct_context_file(self, tmp_path):
         """The generated plan command must reference generic's context file."""
@@ -217,7 +217,7 @@ class TestGenericIntegration:
             "clarify",
             "implement",
             "plan",
-            "specify",
+            "define",
             "tasks",
             "taskstoissues",
         ],
@@ -308,19 +308,17 @@ class TestGenericIntegration:
             ".myagent/commands/pdca.checklist.md",
             ".myagent/commands/pdca.clarify.md",
             ".myagent/commands/pdca.constitution.md",
+            ".myagent/commands/pdca.deploy.md",
+            ".myagent/commands/pdca.fallback.md",
             ".myagent/commands/pdca.implement.md",
             ".myagent/commands/pdca.plan.md",
             ".myagent/commands/pdca.define.md",
+            ".myagent/commands/pdca.release.md",
+            ".myagent/commands/pdca.review.md",
             ".myagent/commands/pdca.tasks.md",
             ".myagent/commands/pdca.taskstoissues.md",
-            ".pdca/extensions.yml",
-            ".pdca/extensions/.registry",
-            ".pdca/extensions/agent-context/README.md",
+            ".myagent/commands/pdca.test.md",
             ".pdca/extensions/agent-context/agent-context-config.yml",
-            ".pdca/extensions/agent-context/commands/pdca.agent-context.update.md",
-            ".pdca/extensions/agent-context/extension.yml",
-            ".pdca/extensions/agent-context/scripts/bash/update-agent-context.sh",
-            ".pdca/extensions/agent-context/scripts/powershell/update-agent-context.ps1",
             ".pdca/init-options.json",
             ".pdca/integration.json",
             ".pdca/integrations/generic.manifest.json",
@@ -372,19 +370,17 @@ class TestGenericIntegration:
             ".myagent/commands/pdca.checklist.md",
             ".myagent/commands/pdca.clarify.md",
             ".myagent/commands/pdca.constitution.md",
+            ".myagent/commands/pdca.deploy.md",
+            ".myagent/commands/pdca.fallback.md",
             ".myagent/commands/pdca.implement.md",
             ".myagent/commands/pdca.plan.md",
             ".myagent/commands/pdca.define.md",
+            ".myagent/commands/pdca.release.md",
+            ".myagent/commands/pdca.review.md",
             ".myagent/commands/pdca.tasks.md",
             ".myagent/commands/pdca.taskstoissues.md",
-            ".pdca/extensions.yml",
-            ".pdca/extensions/.registry",
-            ".pdca/extensions/agent-context/README.md",
+            ".myagent/commands/pdca.test.md",
             ".pdca/extensions/agent-context/agent-context-config.yml",
-            ".pdca/extensions/agent-context/commands/pdca.agent-context.update.md",
-            ".pdca/extensions/agent-context/extension.yml",
-            ".pdca/extensions/agent-context/scripts/bash/update-agent-context.sh",
-            ".pdca/extensions/agent-context/scripts/powershell/update-agent-context.ps1",
             ".pdca/init-options.json",
             ".pdca/integration.json",
             ".pdca/integrations/generic.manifest.json",

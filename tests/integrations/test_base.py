@@ -68,7 +68,7 @@ class TestIntegrationBase:
         tpl = tmp_path / "_templates"
         tpl.mkdir()
         (tpl / "plan.md").write_text("plan content", encoding="utf-8")
-        (tpl / "specify.md").write_text("spec content", encoding="utf-8")
+        (tpl / "define.md").write_text("define content", encoding="utf-8")
 
         i = StubIntegration()
         monkeypatch.setattr(type(i), "list_command_templates", lambda self: sorted(tpl.glob("*.md")))
@@ -225,9 +225,9 @@ class TestResolveCommandRefs:
         assert result == "Run `/pdca-plan` to plan."
 
     def test_multiple_placeholders(self):
-        text = "__PDCA_COMMAND_SPECIFY__ then __PDCA_COMMAND_PLAN__ then __PDCA_COMMAND_TASKS__"
+        text = "__PDCA_COMMAND_DEFINE__ then __PDCA_COMMAND_PLAN__ then __PDCA_COMMAND_TASKS__"
         result = IntegrationBase.resolve_command_refs(text, ".")
-        assert result == "/pdca.pdca then /pdca.plan then /pdca.tasks"
+        assert result == "/pdca.define then /pdca.plan then /pdca.tasks"
 
     def test_extension_command_dot(self):
         text = "Run __PDCA_COMMAND_GIT_COMMIT__ to commit."

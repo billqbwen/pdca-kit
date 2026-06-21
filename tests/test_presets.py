@@ -301,7 +301,7 @@ class TestPresetManifest:
         valid_pack_data["provides"]["templates"] = [
             {"type": "template", "name": "spec-template", "file": "templates/spec-template.md"},
             {"type": "template", "name": "plan-template", "file": "templates/plan-template.md"},
-            {"type": "command", "name": "specify", "file": "commands/specify.md"},
+            {"type": "command", "name": "specify", "file": "commands/define.md"},
             {"type": "script", "name": "create-new-feature", "file": "scripts/create-new-feature.sh"},
         ]
         manifest_path = temp_dir / "preset.yml"
@@ -1039,10 +1039,10 @@ class TestResolveCore:
         """resolve_core must not return files from .pdca/presets/."""
         preset_cmd_dir = project_dir / ".pdca" / "presets" / "my-preset" / "commands"
         preset_cmd_dir.mkdir(parents=True)
-        (preset_cmd_dir / "specify.md").write_text("---\ndescription: preset wrap\n---\n\nwrap body\n")
+        (preset_cmd_dir / "define.md").write_text("---\ndescription: preset wrap\n---\n\nwrap body\n")
 
         resolver = PresetResolver(project_dir)
-        result = resolver.resolve_core("specify", "command")
+        result = resolver.resolve_core("define", "command")
         # The preset file must never be returned — but the bundled core may be.
         if result is not None:
             assert "presets" not in result.parts
@@ -1051,29 +1051,29 @@ class TestResolveCore:
         """resolve_core falls through to core templates (tier 4)."""
         core_cmd_dir = project_dir / ".pdca" / "templates" / "commands"
         core_cmd_dir.mkdir(parents=True, exist_ok=True)
-        (core_cmd_dir / "specify.md").write_text("---\ndescription: core\n---\n\ncore body\n")
+        (core_cmd_dir / "define.md").write_text("---\ndescription: core\n---\n\ncore body\n")
 
         # Also place a preset file — resolve_core must still return the core
         preset_cmd_dir = project_dir / ".pdca" / "presets" / "my-preset" / "commands"
         preset_cmd_dir.mkdir(parents=True)
-        (preset_cmd_dir / "specify.md").write_text("---\ndescription: preset wrap\n---\n\nwrap body\n")
+        (preset_cmd_dir / "define.md").write_text("---\ndescription: preset wrap\n---\n\nwrap body\n")
 
         resolver = PresetResolver(project_dir)
-        result = resolver.resolve_core("specify", "command")
+        result = resolver.resolve_core("define", "command")
         assert result is not None
         assert "presets" not in result.parts
-        assert result.parts[-3:] == ("templates", "commands", "specify.md")
+        assert result.parts[-3:] == ("templates", "commands", "define.md")
 
     def test_resolve_core_returns_override(self, project_dir):
         """resolve_core returns tier-1 override if present."""
         override_dir = project_dir / ".pdca" / "templates" / "overrides"
         override_dir.mkdir(parents=True)
-        (override_dir / "specify.md").write_text("---\ndescription: override\n---\n\noverride body\n")
+        (override_dir / "define.md").write_text("---\ndescription: override\n---\n\noverride body\n")
 
         resolver = PresetResolver(project_dir)
-        result = resolver.resolve_core("specify", "command")
+        result = resolver.resolve_core("define", "command")
         assert result is not None
-        assert result.parts[-2:] == ("overrides", "specify.md")
+        assert result.parts[-2:] == ("overrides", "define.md")
 
     def test_resolve_core_returns_extension_template(self, project_dir):
         """resolve_core returns extension templates (tier 3)."""
@@ -2091,7 +2091,7 @@ class TestSelfTestPreset:
         manifest = PresetManifest(SELF_TEST_PRESET_DIR / "preset.yml")
         commands = [t for t in manifest.templates if t["type"] == "command"]
         assert len(commands) >= 1
-        assert commands[0]["name"] == "pdca.pdca"
+        assert commands[0]["name"] == "pdca.define"
 
     def test_self_test_command_file_exists(self):
         """Verify the self-test command file exists on disk."""
@@ -2110,7 +2110,7 @@ class TestSelfTestPreset:
         install_self_test_preset(manager)
 
         # Check the skill was registered
-        cmd_file = claude_dir / "pdca-specify" / "SKILL.md"
+        cmd_file = claude_dir / "pdca-define" / "SKILL.md"
         assert cmd_file.exists(), "Skill not registered in .claude/skills/"
         content = cmd_file.read_text()
         assert "self-test" in content
@@ -2140,7 +2140,7 @@ class TestSelfTestPreset:
         manager = PresetManager(project_dir)
         install_self_test_preset(manager)
 
-        cmd_file = claude_dir / "pdca-specify" / "SKILL.md"
+        cmd_file = claude_dir / "pdca-define" / "SKILL.md"
         assert cmd_file.exists()
 
         manager.remove("self-test")
@@ -2406,7 +2406,7 @@ class TestPresetSkills:
         # Simulate --ai-skills having been used: write init-options + create skill
         self._write_init_options(project_dir, ai="claude")
         skills_dir = project_dir / ".claude" / "skills"
-        self._create_skill(skills_dir, "pdca-specify")
+        self._create_skill(skills_dir, "pdca-define")
 
         # Also create the claude commands dir so commands get registered
         (project_dir / ".claude" / "skills").mkdir(parents=True, exist_ok=True)
@@ -2415,7 +2415,7 @@ class TestPresetSkills:
         manager = PresetManager(project_dir)
         install_self_test_preset(manager)
 
-        skill_file = skills_dir / "pdca-specify" / "SKILL.md"
+        skill_file = skills_dir / "pdca-define" / "SKILL.md"
         assert skill_file.exists()
         content = skill_file.read_text()
         assert "preset:self-test" in content, "Skill should reference preset source"
@@ -2423,7 +2423,7 @@ class TestPresetSkills:
 
         # Verify it was recorded in registry
         metadata = manager.registry.get("self-test")
-        assert "pdca-specify" in metadata.get("registered_skills", [])
+        assert "pdca-define" in metadata.get("registered_skills", [])
 
     def test_register_skills_resolves_command_refs(self, project_dir, temp_dir):
         """Preset skill overrides must resolve __PDCA_COMMAND_*__ tokens (issue #2717).
@@ -2434,34 +2434,34 @@ class TestPresetSkills:
         """
         self._write_init_options(project_dir, ai="claude")
         skills_dir = project_dir / ".claude" / "skills"
-        self._create_skill(skills_dir, "pdca-specify")
+        self._create_skill(skills_dir, "pdca-define")
 
         preset_dir = self._create_command_preset(
             temp_dir,
             "cmdref-install",
-            "pdca.pdca",
+            "pdca.define",
             "Override specify",
-            "Run `__PDCA_COMMAND_SPECIFY__` then `__PDCA_COMMAND_PLAN__`.\n",
+            "Run `__PDCA_COMMAND_DEFINE__` then `__PDCA_COMMAND_PLAN__`.\n",
         )
 
         manager = PresetManager(project_dir)
         manager.install_from_directory(preset_dir, "0.1.5")
 
-        content = (skills_dir / "pdca-specify" / "SKILL.md").read_text()
+        content = (skills_dir / "pdca-define" / "SKILL.md").read_text()
         assert "__PDCA_COMMAND_" not in content, "raw command token leaked into SKILL.md"
         # Claude's invoke_separator is "-", so tokens render as /pdca-<cmd>.
-        assert "/pdca-specify" in content
+        assert "/pdca-define" in content
         assert "/pdca-plan" in content
 
     def test_restore_skill_resolves_command_refs(self, project_dir, temp_dir):
         """Skill restore on preset removal must also resolve command tokens (issue #2717)."""
         self._write_init_options(project_dir, ai="claude")
         skills_dir = project_dir / ".claude" / "skills"
-        self._create_skill(skills_dir, "pdca-specify")
+        self._create_skill(skills_dir, "pdca-define")
 
         core_cmds = project_dir / ".pdca" / "templates" / "commands"
         core_cmds.mkdir(parents=True, exist_ok=True)
-        (core_cmds / "specify.md").write_text(
+        (core_cmds / "define.md").write_text(
             "---\ndescription: Core specify\n---\n\n"
             "Then run `__PDCA_COMMAND_PLAN__`.\n"
         )
@@ -2469,7 +2469,7 @@ class TestPresetSkills:
         preset_dir = self._create_command_preset(
             temp_dir,
             "cmdref-restore",
-            "pdca.pdca",
+            "pdca.define",
             "Override specify",
             "Override body\n",
         )
@@ -2477,7 +2477,7 @@ class TestPresetSkills:
         manager.install_from_directory(preset_dir, "0.1.5")
         manager.remove("cmdref-restore")
 
-        content = (skills_dir / "pdca-specify" / "SKILL.md").read_text()
+        content = (skills_dir / "pdca-define" / "SKILL.md").read_text()
         assert "__PDCA_COMMAND_" not in content, "raw command token leaked on restore"
         assert "/pdca-plan" in content
 
@@ -2490,7 +2490,7 @@ class TestPresetSkills:
         """
         self._write_init_options(project_dir, ai="claude")
         skills_dir = project_dir / ".claude" / "skills"
-        self._create_skill(skills_dir, "pdca-specify")
+        self._create_skill(skills_dir, "pdca-define")
 
         # Project override wins once the preset is removed; its body carries a
         # command cross-reference token. No core template exists for "specify",
@@ -2505,7 +2505,7 @@ class TestPresetSkills:
         preset_dir = self._create_command_preset(
             temp_dir,
             "cmdref-reconcile",
-            "pdca.pdca",
+            "pdca.define",
             "Preset specify",
             "Preset body\n",
         )
@@ -2513,8 +2513,8 @@ class TestPresetSkills:
         manager.install_from_directory(preset_dir, "0.1.5")
         manager.remove("cmdref-reconcile")
 
-        content = (skills_dir / "pdca-specify" / "SKILL.md").read_text()
-        assert "override:pdca.pdca" in content, "skill should be restored from the project override"
+        content = (skills_dir / "pdca-define" / "SKILL.md").read_text()
+        assert "override:pdca.define" in content, "skill should be restored from the project override"
         assert "__PDCA_COMMAND_" not in content, "raw command token leaked on reconcile"
         assert "/pdca-plan" in content
 
@@ -2691,12 +2691,12 @@ class TestPresetSkills:
         """When --ai-skills was NOT used, preset install should not touch skills."""
         self._write_init_options(project_dir, ai="qwen", ai_skills=False)
         skills_dir = project_dir / ".qwen" / "skills"
-        self._create_skill(skills_dir, "pdca-specify", body="untouched")
+        self._create_skill(skills_dir, "pdca-define", body="untouched")
 
         manager = PresetManager(project_dir)
         install_self_test_preset(manager)
 
-        skill_file = skills_dir / "pdca-specify" / "SKILL.md"
+        skill_file = skills_dir / "pdca-define" / "SKILL.md"
         content = skill_file.read_text()
         assert "untouched" in content, "Skill should not be modified when ai_skills=False"
 
@@ -2723,12 +2723,12 @@ class TestPresetSkills:
     def test_skill_not_updated_without_init_options(self, project_dir, temp_dir):
         """When no init-options.json exists, preset install should not touch skills."""
         skills_dir = project_dir / ".qwen" / "skills"
-        self._create_skill(skills_dir, "pdca-specify", body="untouched")
+        self._create_skill(skills_dir, "pdca-define", body="untouched")
 
         manager = PresetManager(project_dir)
         install_self_test_preset(manager)
 
-        skill_file = skills_dir / "pdca-specify" / "SKILL.md"
+        skill_file = skills_dir / "pdca-define" / "SKILL.md"
         file_content = skill_file.read_text()
         assert "untouched" in file_content
 
@@ -2736,20 +2736,20 @@ class TestPresetSkills:
         """When a preset is removed, skills should be restored from core templates."""
         self._write_init_options(project_dir, ai="claude")
         skills_dir = project_dir / ".claude" / "skills"
-        self._create_skill(skills_dir, "pdca-specify")
+        self._create_skill(skills_dir, "pdca-define")
 
         (project_dir / ".claude" / "skills").mkdir(parents=True, exist_ok=True)
 
         # Set up core command template in the project so restoration works
         core_cmds = project_dir / ".pdca" / "templates" / "commands"
         core_cmds.mkdir(parents=True, exist_ok=True)
-        (core_cmds / "specify.md").write_text("---\ndescription: Core specify command\n---\n\nCore specify body\n")
+        (core_cmds / "define.md").write_text("---\ndescription: Core specify command\n---\n\nCore specify body\n")
 
         manager = PresetManager(project_dir)
         install_self_test_preset(manager)
 
         # Verify preset content is in the skill
-        skill_file = skills_dir / "pdca-specify" / "SKILL.md"
+        skill_file = skills_dir / "pdca-define" / "SKILL.md"
         assert "preset:self-test" in skill_file.read_text()
 
         # Remove the preset
@@ -2759,19 +2759,19 @@ class TestPresetSkills:
         assert skill_file.exists(), "Skill should still exist after preset removal"
         content = skill_file.read_text()
         assert "preset:self-test" not in content, "Preset content should be gone"
-        assert "templates/commands/specify.md" in content, "Should reference core template"
+        assert "templates/commands/define.md" in content, "Should reference core template"
         assert "disable-model-invocation: false" in content
 
     def test_skill_restored_on_remove_resolves_script_placeholders(self, project_dir):
         """Core restore should resolve {SCRIPT}/{ARGS} placeholders like other skill paths."""
         self._write_init_options(project_dir, ai="claude", ai_skills=True, script="sh")
         skills_dir = project_dir / ".claude" / "skills"
-        self._create_skill(skills_dir, "pdca-specify", body="old")
+        self._create_skill(skills_dir, "pdca-define", body="old")
         (project_dir / ".claude" / "skills").mkdir(parents=True, exist_ok=True)
 
         core_cmds = project_dir / ".pdca" / "templates" / "commands"
         core_cmds.mkdir(parents=True, exist_ok=True)
-        (core_cmds / "specify.md").write_text(
+        (core_cmds / "define.md").write_text(
             "---\n"
             "description: Core specify command\n"
             "scripts:\n"
@@ -2785,7 +2785,7 @@ class TestPresetSkills:
         install_self_test_preset(manager)
         manager.remove("self-test")
 
-        content = (skills_dir / "pdca-specify" / "SKILL.md").read_text()
+        content = (skills_dir / "pdca-define" / "SKILL.md").read_text()
         assert "{SCRIPT}" not in content
         assert "{ARGS}" not in content
         assert ".pdca/scripts/bash/create-new-feature.sh --json \"$ARGUMENTS\"" in content
@@ -2795,14 +2795,14 @@ class TestPresetSkills:
         self._write_init_options(project_dir, ai="qwen")
         skills_dir = project_dir / ".qwen" / "skills"
         skills_dir.mkdir(parents=True, exist_ok=True)
-        (skills_dir / "pdca-specify").write_text("not-a-directory")
+        (skills_dir / "pdca-define").write_text("not-a-directory")
 
         manager = PresetManager(project_dir)
         install_self_test_preset(manager)
 
-        assert (skills_dir / "pdca-specify").is_file()
+        assert (skills_dir / "pdca-define").is_file()
         metadata = manager.registry.get("self-test")
-        assert "pdca-specify" not in metadata.get("registered_skills", [])
+        assert "pdca-define" not in metadata.get("registered_skills", [])
 
     def test_no_skills_registered_when_no_skill_dir_exists(self, project_dir, temp_dir):
         """Skills should not be created when no existing skill dir is found."""
@@ -3006,41 +3006,41 @@ class TestPresetSkills:
         """Preset overrides should still target legacy dotted Kimi skill directories."""
         self._write_init_options(project_dir, ai="kimi")
         skills_dir = project_dir / ".kimi" / "skills"
-        self._create_skill(skills_dir, "pdca.pdca", body="untouched")
+        self._create_skill(skills_dir, "pdca.define", body="untouched")
 
         (project_dir / ".kimi" / "commands").mkdir(parents=True, exist_ok=True)
 
         manager = PresetManager(project_dir)
         install_self_test_preset(manager)
 
-        skill_file = skills_dir / "pdca.pdca" / "SKILL.md"
+        skill_file = skills_dir / "pdca.define" / "SKILL.md"
         assert skill_file.exists()
         content = skill_file.read_text()
         assert "preset:self-test" in content
-        assert "name: pdca.pdca" in content
+        assert "name: pdca.define" in content
 
         metadata = manager.registry.get("self-test")
-        assert "pdca.pdca" in metadata.get("registered_skills", [])
+        assert "pdca.define" in metadata.get("registered_skills", [])
 
     def test_kimi_skill_updated_even_when_ai_skills_disabled(self, project_dir, temp_dir):
         """Kimi presets should still propagate command overrides to existing skills."""
         self._write_init_options(project_dir, ai="kimi", ai_skills=False)
         skills_dir = project_dir / ".kimi" / "skills"
-        self._create_skill(skills_dir, "pdca-specify", body="untouched")
+        self._create_skill(skills_dir, "pdca-define", body="untouched")
 
         (project_dir / ".kimi" / "commands").mkdir(parents=True, exist_ok=True)
 
         manager = PresetManager(project_dir)
         install_self_test_preset(manager)
 
-        skill_file = skills_dir / "pdca-specify" / "SKILL.md"
+        skill_file = skills_dir / "pdca-define" / "SKILL.md"
         assert skill_file.exists()
         content = skill_file.read_text()
         assert "preset:self-test" in content
-        assert "name: pdca-specify" in content
+        assert "name: pdca-define" in content
 
         metadata = manager.registry.get("self-test")
-        assert "pdca-specify" in metadata.get("registered_skills", [])
+        assert "pdca-define" in metadata.get("registered_skills", [])
 
     def test_kimi_new_skill_created_even_when_ai_skills_disabled(self, project_dir, temp_dir):
         """Kimi native skills should still receive brand-new preset commands."""
@@ -3095,7 +3095,7 @@ class TestPresetSkills:
         """Kimi preset skill overrides should resolve placeholders and rewrite project paths."""
         self._write_init_options(project_dir, ai="kimi", ai_skills=False, script="sh")
         skills_dir = project_dir / ".kimi" / "skills"
-        self._create_skill(skills_dir, "pdca-specify", body="untouched")
+        self._create_skill(skills_dir, "pdca-define", body="untouched")
         (project_dir / ".kimi" / "commands").mkdir(parents=True, exist_ok=True)
 
         preset_dir = temp_dir / "kimi-placeholder-override"
@@ -3123,7 +3123,7 @@ class TestPresetSkills:
                 "templates": [
                     {
                         "type": "command",
-                        "name": "pdca.pdca",
+                        "name": "pdca.define",
                         "file": "commands/pdca.define.md",
                     }
                 ]
@@ -3135,7 +3135,7 @@ class TestPresetSkills:
         manager = PresetManager(project_dir)
         manager.install_from_directory(preset_dir, "0.1.5")
 
-        content = (skills_dir / "pdca-specify" / "SKILL.md").read_text()
+        content = (skills_dir / "pdca-define" / "SKILL.md").read_text()
         assert "{SCRIPT}" not in content
         assert "__AGENT__" not in content
         assert ".pdca/scripts/bash/create-new-feature.sh --json \"$ARGUMENTS\"" in content
@@ -3147,9 +3147,9 @@ class TestPresetSkills:
         """Agy preset removal should restore native skills instead of deleting them."""
         self._write_init_options(project_dir, ai="agy", ai_skills=True)
         skills_dir = project_dir / ".agents" / "skills"
-        self._create_skill(skills_dir, "pdca-specify", body="before override")
+        self._create_skill(skills_dir, "pdca-define", body="before override")
 
-        core_command = project_dir / ".pdca" / "templates" / "commands" / "specify.md"
+        core_command = project_dir / ".pdca" / "templates" / "commands" / "define.md"
         core_command.write_text(
             "---\n"
             "description: Restored core specify workflow\n"
@@ -3179,7 +3179,7 @@ class TestPresetSkills:
                 "templates": [
                     {
                         "type": "command",
-                        "name": "pdca.pdca",
+                        "name": "pdca.define",
                         "file": "commands/pdca.define.md",
                     }
                 ]
@@ -3191,14 +3191,14 @@ class TestPresetSkills:
         manager = PresetManager(project_dir)
         manager.install_from_directory(preset_dir, "0.1.5")
 
-        skill_file = skills_dir / "pdca-specify" / "SKILL.md"
+        skill_file = skills_dir / "pdca-define" / "SKILL.md"
         assert "preset agy body" in skill_file.read_text()
 
         assert manager.remove("agy-override") is True
         assert skill_file.exists()
         restored = skill_file.read_text()
         assert "restored core body" in restored
-        assert "name: pdca-specify" in restored
+        assert "name: pdca-define" in restored
 
     def test_preset_skill_registration_handles_non_dict_init_options(self, project_dir, temp_dir):
         """Non-dict init-options payloads should not crash preset install/remove flows."""
@@ -3207,12 +3207,12 @@ class TestPresetSkills:
         init_options.write_text("[]")
 
         skills_dir = project_dir / ".qwen" / "skills"
-        self._create_skill(skills_dir, "pdca-specify", body="untouched")
+        self._create_skill(skills_dir, "pdca-define", body="untouched")
 
         manager = PresetManager(project_dir)
         install_self_test_preset(manager)
 
-        skill_content = (skills_dir / "pdca-specify" / "SKILL.md").read_text()
+        skill_content = (skills_dir / "pdca-define" / "SKILL.md").read_text()
         assert "untouched" in skill_content
 
 
@@ -3569,7 +3569,7 @@ class TestPresetEnableDisable:
 LEAN_PRESET_DIR = Path(__file__).parent.parent / "presets" / "lean"
 
 LEAN_COMMAND_NAMES = [
-    "pdca.pdca",
+    "pdca.define",
     "pdca.plan",
     "pdca.tasks",
     "pdca.implement",
@@ -3752,13 +3752,13 @@ class TestWrapStrategy:
         # Set up a core command template
         core_dir = project_dir / ".pdca" / "templates" / "commands"
         core_dir.mkdir(parents=True, exist_ok=True)
-        (core_dir / "specify.md").write_text(
+        (core_dir / "define.md").write_text(
             "---\ndescription: core\n---\n\n# Core Specify\n\nDo the thing.\n"
         )
 
         registrar = CommandRegistrar()
         body = "## Pre-Logic\n\nBefore stuff.\n\n{CORE_TEMPLATE}\n\n## Post-Logic\n\nAfter stuff.\n"
-        result, core_fm = _substitute_core_template(body, "specify", project_dir, registrar)
+        result, core_fm = _substitute_core_template(body, "define", project_dir, registrar)
 
         assert "{CORE_TEMPLATE}" not in result
         assert "# Core Specify" in result
@@ -3773,11 +3773,11 @@ class TestWrapStrategy:
 
         core_dir = project_dir / ".pdca" / "templates" / "commands"
         core_dir.mkdir(parents=True, exist_ok=True)
-        (core_dir / "specify.md").write_text("---\ndescription: core\n---\n\nCore body.\n")
+        (core_dir / "define.md").write_text("---\ndescription: core\n---\n\nCore body.\n")
 
         registrar = CommandRegistrar()
         body = "## No placeholder here.\n"
-        result, core_fm = _substitute_core_template(body, "specify", project_dir, registrar)
+        result, core_fm = _substitute_core_template(body, "define", project_dir, registrar)
         assert result == body
         assert core_fm == {}
 
@@ -3800,7 +3800,7 @@ class TestWrapStrategy:
         # Set up core command template
         core_dir = project_dir / ".pdca" / "templates" / "commands"
         core_dir.mkdir(parents=True, exist_ok=True)
-        (core_dir / "specify.md").write_text(
+        (core_dir / "define.md").write_text(
             "---\ndescription: core\n---\n\n# Core Specify\n\nCore body here.\n"
         )
 
@@ -3812,7 +3812,7 @@ class TestWrapStrategy:
             "## Pre\n\n{CORE_TEMPLATE}\n\n## Post\n"
         )
 
-        commands = [{"name": "pdca.pdca", "file": "commands/pdca.define.md"}]
+        commands = [{"name": "pdca.define", "file": "commands/pdca.define.md"}]
         registrar = CommandRegistrar()
 
         # Use a generic agent that writes markdown to commands/
@@ -3884,13 +3884,13 @@ class TestWrapStrategy:
 
         core_dir = project_dir / ".pdca" / "templates" / "commands"
         core_dir.mkdir(parents=True, exist_ok=True)
-        (core_dir / "specify.md").write_text(
+        (core_dir / "define.md").write_text(
             "---\ndescription: core\nscripts:\n  sh: run.sh\nagent_scripts:\n  sh: agent-run.sh\n---\n\n# Body\n"
         )
 
         registrar = CommandRegistrar()
         body = "## Wrapper\n\n{CORE_TEMPLATE}\n"
-        result, core_fm = _substitute_core_template(body, "specify", project_dir, registrar)
+        result, core_fm = _substitute_core_template(body, "define", project_dir, registrar)
 
         assert "# Body" in result
         assert core_fm.get("scripts") == {"sh": "run.sh"}
@@ -3934,13 +3934,13 @@ class TestWrapStrategy:
 
         core_dir = project_dir / ".pdca" / "templates" / "commands"
         core_dir.mkdir(parents=True, exist_ok=True)
-        (core_dir / "specify.md").write_text(
+        (core_dir / "define.md").write_text(
             "---\ndescription: core\nscripts:\n  sh: core-run.sh\n---\n\nCore body.\n"
         )
 
         registrar = CommandRegistrar()
         body = "{CORE_TEMPLATE}"
-        _, core_fm = _substitute_core_template(body, "specify", project_dir, registrar)
+        _, core_fm = _substitute_core_template(body, "define", project_dir, registrar)
 
         # Simulate preset frontmatter that already defines scripts
         preset_fm = {"description": "preset", "strategy": "wrap", "scripts": {"sh": "preset-run.sh"}}
@@ -3958,7 +3958,7 @@ class TestWrapStrategy:
 
         core_dir = project_dir / ".pdca" / "templates" / "commands"
         core_dir.mkdir(parents=True, exist_ok=True)
-        (core_dir / "specify.md").write_text(
+        (core_dir / "define.md").write_text(
             "---\ndescription: core\nscripts:\n  sh: .pdca/scripts/run.sh {ARGS}\n---\n\n"
             "Run: {SCRIPT}\n"
         )
@@ -3986,7 +3986,7 @@ class TestWrapStrategy:
         try:
             registrar.register_commands(
                 "test-agent",
-                [{"name": "pdca.pdca", "file": "commands/pdca.define.md"}],
+                [{"name": "pdca.define", "file": "commands/pdca.define.md"}],
                 "test-preset",
                 project_dir / "preset",
                 project_dir,
@@ -4008,7 +4008,7 @@ class TestWrapStrategy:
 
         core_dir = project_dir / ".pdca" / "templates" / "commands"
         core_dir.mkdir(parents=True, exist_ok=True)
-        (core_dir / "specify.md").write_text(
+        (core_dir / "define.md").write_text(
             "---\ndescription: core\nscripts:\n  sh: .pdca/scripts/run.sh {ARGS}\n---\n\n"
             "Run: {SCRIPT}\n"
         )
@@ -4035,7 +4035,7 @@ class TestWrapStrategy:
         try:
             registrar.register_commands(
                 "test-toml-agent",
-                [{"name": "pdca.pdca", "file": "commands/pdca.define.md"}],
+                [{"name": "pdca.define", "file": "commands/pdca.define.md"}],
                 "test-preset",
                 project_dir / "preset",
                 project_dir,
@@ -4059,7 +4059,7 @@ class TestWrapStrategy:
 
         core_dir = project_dir / ".pdca" / "templates" / "commands"
         core_dir.mkdir(parents=True, exist_ok=True)
-        (core_dir / "specify.md").write_text(
+        (core_dir / "define.md").write_text(
             "---\ndescription: core\nscripts:\n  sh: .pdca/scripts/run.sh {ARGS}\n---\n\n"
             "Run: {SCRIPT}\n"
         )
@@ -4086,7 +4086,7 @@ class TestWrapStrategy:
         try:
             registrar.register_commands(
                 "test-md-agent",
-                [{"name": "pdca.pdca", "file": "commands/pdca.define.md"}],
+                [{"name": "pdca.define", "file": "commands/pdca.define.md"}],
                 "test-preset",
                 project_dir / "preset",
                 project_dir,
@@ -4112,7 +4112,7 @@ class TestWrapStrategy:
 
         core_dir = project_dir / ".pdca" / "templates" / "commands"
         core_dir.mkdir(parents=True, exist_ok=True)
-        (core_dir / "specify.md").write_text(
+        (core_dir / "define.md").write_text(
             "---\ndescription: core\nscripts:\n  sh: .pdca/scripts/run.sh {ARGS}\n---\n\n"
             "Run: {SCRIPT}\n"
         )
@@ -4139,7 +4139,7 @@ class TestWrapStrategy:
         try:
             registrar.register_commands(
                 "test-forge-agent",
-                [{"name": "pdca.pdca", "file": "commands/pdca.define.md"}],
+                [{"name": "pdca.define", "file": "commands/pdca.define.md"}],
                 "test-preset",
                 project_dir / "preset",
                 project_dir,
@@ -4401,7 +4401,7 @@ class TestCompositionStrategyValidation:
         """Test that prepend strategy is accepted for commands."""
         valid_pack_data["provides"]["templates"] = [{
             "type": "command",
-            "name": "pdca.pdca",
+            "name": "pdca.define",
             "file": "commands/pdca.define.md",
             "strategy": "prepend",
         }]
@@ -4911,7 +4911,7 @@ class TestRemoveReconciliation:
         lo_data["provides"] = {
             "templates": [{
                 "type": "command",
-                "name": "pdca.pdca",
+                "name": "pdca.define",
                 "file": "commands/pdca.define.md",
             }]
         }
@@ -4935,7 +4935,7 @@ class TestRemoveReconciliation:
         hi_data["provides"] = {
             "templates": [{
                 "type": "command",
-                "name": "pdca.pdca",
+                "name": "pdca.define",
                 "file": "commands/pdca.define.md",
             }]
         }
@@ -4950,7 +4950,7 @@ class TestRemoveReconciliation:
         manager.install_from_directory(hi_dir, "0.1.5", priority=1)
 
         # Verify the hi-preset's content is active in agent dir
-        cmd_files = list(gemini_dir.glob("*specify*"))
+        cmd_files = list(gemini_dir.glob("*define*"))
         assert cmd_files, "Command file should exist in gemini dir"
         assert "Hi content" in cmd_files[0].read_text()
 
@@ -4959,12 +4959,12 @@ class TestRemoveReconciliation:
 
         # The low-priority preset's command should now be in the resolution stack
         resolver = PresetResolver(project_dir)
-        layers = resolver.collect_all_layers("pdca.pdca", "command")
+        layers = resolver.collect_all_layers("pdca.define", "command")
         assert len(layers) >= 1
         assert "lo-preset" in layers[0]["source"]
 
         # Verify on-disk agent command file switched to lo-preset content
-        cmd_files = list(gemini_dir.glob("*specify*"))
+        cmd_files = list(gemini_dir.glob("*define*"))
         assert cmd_files, "Command file should still exist after removal"
         assert "Lo content" in cmd_files[0].read_text()
 

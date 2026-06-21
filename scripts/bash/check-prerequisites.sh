@@ -117,7 +117,7 @@ check_feature_branch "$CURRENT_BRANCH" "$HAS_GIT" || exit 1
 # Validate required directories and files
 if [[ ! -d "$FEATURE_DIR" ]]; then
     echo "ERROR: Feature directory not found: $FEATURE_DIR" >&2
-    echo "Run __PDCA_COMMAND_SPECIFY__ first to create the feature structure." >&2
+    echo "Run __PDCA_COMMAND_DEFINE__ first to create the feature structure." >&2
     exit 1
 fi
 

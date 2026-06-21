@@ -485,13 +485,13 @@ class TestCommandStep:
         )
         config = {
             "id": "test",
-            "command": "pdca.pdca",
+            "command": "pdca.define",
             "input": {"args": "{{ inputs.name }}"},
         }
         with patch("pdca_cli.workflows.steps.command.shutil.which", return_value=None):
             result = step.execute(config, ctx)
         assert result.status == StepStatus.FAILED
-        assert result.output["command"] == "pdca.pdca"
+        assert result.output["command"] == "pdca.define"
         assert result.output["integration"] == "claude"
         assert result.output["input"]["args"] == "login"
 
@@ -568,7 +568,7 @@ class TestCommandStep:
         )
         config = {
             "id": "test",
-            "command": "pdca.pdca",
+            "command": "pdca.define",
             "input": {"args": "{{ inputs.name }}"},
         }
         with patch("pdca_cli.workflows.steps.command.shutil.which", return_value=None):
@@ -591,7 +591,7 @@ class TestCommandStep:
         )
         config = {
             "id": "test",
-            "command": "pdca.pdca",
+            "command": "pdca.define",
             "input": {"args": "{{ inputs.name }}"},
         }
 
@@ -611,8 +611,8 @@ class TestCommandStep:
         call_args = mock_run.call_args
         assert call_args[0][0][0] == "claude"
         assert call_args[0][0][1] == "-p"
-        # Claude is a SkillsIntegration so uses /pdca-specify
-        assert "/pdca-specify login" in call_args[0][0][2]
+        # Claude is a SkillsIntegration so uses /pdca-define
+        assert "/pdca-define login" in call_args[0][0][2]
 
     def test_dispatch_failure_returns_failed_status(self, tmp_path):
         """When the CLI exits non-zero, the step should fail."""
@@ -628,7 +628,7 @@ class TestCommandStep:
         )
         config = {
             "id": "test",
-            "command": "pdca.pdca",
+            "command": "pdca.define",
             "input": {"args": "test"},
         }
 
@@ -1019,7 +1019,7 @@ class TestDoWhileStep:
             "id": "cycle",
             "condition": "{{ false }}",
             "max_iterations": 3,
-            "steps": [{"id": "refine", "command": "pdca.pdca"}],
+            "steps": [{"id": "refine", "command": "pdca.define"}],
         }
         result = step.execute(config, ctx)
         assert len(result.next_steps) == 1
@@ -1429,7 +1429,7 @@ steps:
 
         assert state.status == RunStatus.FAILED
         assert "step-one" in state.step_results
-        assert state.step_results["step-one"]["output"]["command"] == "pdca.pdca"
+        assert state.step_results["step-one"]["output"]["command"] == "pdca.define"
         assert state.step_results["step-one"]["output"]["input"]["args"] == "login"
 
     def test_execute_with_gate_pauses(self, project_dir):

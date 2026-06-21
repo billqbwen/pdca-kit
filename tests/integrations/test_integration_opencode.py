@@ -102,7 +102,7 @@ class TestOpencodeIntegration(MarkdownIntegrationTests):
         assert len(opencode_warnings) == 1, (
             f"Expected exactly 1 legacy-dir warning, got {len(opencode_warnings)}"
         )
-        assert "specify integration upgrade" in str(opencode_warnings[0].message)
+        assert "pdca integration upgrade" in str(opencode_warnings[0].message)
 
     def test_legacy_dir_unregister(self, tmp_path):
         """Unregister finds commands in legacy .opencode/command/ dir."""

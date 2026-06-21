@@ -340,6 +340,10 @@ def install_shared_infra(
         except SymlinkedSharedPathError:
             symlinked_files.append(rel)
             return False
+        except ValueError:
+            # Destination is a directory (non-empty bucket) — skip and log.
+            skipped_files.append(rel)
+            return False
         return True
 
     def _ensure_or_bucket_dir(directory: Path) -> bool:

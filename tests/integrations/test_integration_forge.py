@@ -12,7 +12,7 @@ class TestForgeCommandNameFormatter:
         """Test formatting a simple name without 'pdca.' prefix."""
         assert format_forge_command_name("plan") == "pdca-plan"
         assert format_forge_command_name("tasks") == "pdca-tasks"
-        assert format_forge_command_name("specify") == "pdca-specify"
+        assert format_forge_command_name("define") == "pdca-define"
 
     def test_name_with_pdca_prefix(self):
         """Test formatting a name that already has 'pdca.' prefix."""
@@ -81,8 +81,8 @@ class TestForgeIntegration:
         ctx_path = tmp_path / forge.context_file
         assert ctx_path.exists()
         content = ctx_path.read_text(encoding="utf-8")
-        assert "<!-- SPECKIT START -->" in content
-        assert "<!-- SPECKIT END -->" in content
+        assert "<!-- PDCA START -->" in content
+        assert "<!-- PDCA END -->" in content
 
     def test_all_created_files_tracked_in_manifest(self, tmp_path):
         from pdca_cli.integrations.forge import ForgeIntegration
@@ -436,7 +436,7 @@ class TestForgeCommandRegistrar:
         )
 
     def test_git_extension_command_uses_hyphen_notation(self, tmp_path):
-        """Verify the git extension's feature command uses /pdca-specify (not /pdca.define) for Forge."""
+        """Verify the git extension's feature command uses /pdca-define for Forge (no dot notation)."""
         from pathlib import Path
         from pdca_cli.agents import CommandRegistrar
 
@@ -471,11 +471,11 @@ class TestForgeCommandRegistrar:
         assert forge_cmd.exists(), "Expected Forge command file was not created"
 
         content = forge_cmd.read_text(encoding="utf-8")
-        assert "/pdca-specify" in content, (
-            "Expected '/pdca-specify' (hyphen) in generated Forge git.feature command body, "
-            "but it was not found. Check that __PDCA_COMMAND_SPECIFY__ is resolved correctly."
+        assert "/pdca-define" in content, (
+            "Expected '/pdca-define' (hyphen) in generated Forge git.feature command body, "
+            "but it was not found. Check that __PDCA_COMMAND_DEFINE__ is resolved correctly."
         )
-        assert "/pdca.pdca" not in content, (
+        assert "/pdca.define" not in content, (
             "Found '/pdca.define' (dot notation) in generated Forge git.feature command body. "
             "Forge requires hyphen notation for ZSH compatibility."
         )

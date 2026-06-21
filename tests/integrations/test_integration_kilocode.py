@@ -8,4 +8,4 @@ class TestKilocodeIntegration(MarkdownIntegrationTests):
     FOLDER = ".kilocode/"
     COMMANDS_SUBDIR = "workflows"
     REGISTRAR_DIR = ".kilocode/workflows"
-    CONTEXT_FILE = ".kilocode/rules/specify-rules.md"
+    CONTEXT_FILE = ".kilocode/rules/pdca-rules.md"

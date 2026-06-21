@@ -288,7 +288,7 @@ function Get-FeaturePathsEnv {
 
     # Resolve feature directory.  Priority:
     #   1. PDCA_FEATURE_DIRECTORY env var (explicit override)
-    #   2. .pdca/feature.json "feature_directory" key (persisted by __PDCA_COMMAND_SPECIFY__)
+    #   2. .pdca/feature.json "feature_directory" key (persisted by __PDCA_COMMAND_DEFINE__)
     #   3. Branch-name-based prefix lookup (same as scripts/bash/common.sh)
     $featureJson = Join-Path $repoRoot '.pdca/feature.json'
     if ($env:PDCA_FEATURE_DIRECTORY) {

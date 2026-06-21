@@ -123,6 +123,7 @@ def test_setup_tasks_bash_core_template_resolved(tasks_repo: Path) -> None:
     setup-tasks.sh --json should exit 0 and return an absolute, existing
     TASKS_TEMPLATE path pointing to the core template.
     """
+    _minimal_feature(tasks_repo)
     script = tasks_repo / ".pdca" / "scripts" / "bash" / "setup-tasks.sh"
  
     result = subprocess.run(
@@ -149,6 +150,7 @@ def test_setup_tasks_bash_override_wins(tasks_repo: Path) -> None:
     When an override exists at .pdca/templates/overrides/tasks-template.md,
     setup-tasks.sh --json must return the override path, not the core path.
     """
+    _minimal_feature(tasks_repo)
  
     # Create the override
     overrides_dir = tasks_repo / ".pdca" / "templates" / "overrides"
@@ -185,6 +187,7 @@ def test_setup_tasks_bash_extension_wins_over_core(tasks_repo: Path) -> None:
     When an extension template exists, setup-tasks.sh --json must resolve
     tasks-template.md from the extension before falling back to the core path.
     """
+    _minimal_feature(tasks_repo)
  
     # FIX: real extension layout is .pdca/extensions/<id>/templates/<name>.md
     extension_dir = (
@@ -222,6 +225,7 @@ def test_setup_tasks_bash_preset_wins_over_extension(tasks_repo: Path) -> None:
     When both preset and extension templates exist, setup-tasks.sh --json must
     resolve the preset path because presets outrank extensions.
     """
+    _minimal_feature(tasks_repo)
  
     # FIX: real extension layout is .pdca/extensions/<id>/templates/<name>.md
     extension_dir = (
@@ -265,6 +269,7 @@ def test_setup_tasks_bash_preset_priority_order(tasks_repo: Path) -> None:
     When two presets both provide tasks-template.md, the one listed first in
     .pdca/presets/.registry wins.
     """
+    _minimal_feature(tasks_repo)
  
     # resolve_template reads .pdca/presets/.registry as a JSON object with a
     # "presets" map where each entry has a numeric "priority" (lower = higher
@@ -324,6 +329,7 @@ def test_setup_tasks_bash_missing_template_errors(tasks_repo: Path) -> None:
     When tasks-template.md is absent from all locations, setup-tasks.sh must
     exit non-zero and print a helpful ERROR message to stderr.
     """
+    _minimal_feature(tasks_repo)
  
     # Remove the core template so no template exists anywhere
     core = tasks_repo / ".pdca" / "templates" / "tasks-template.md"
@@ -353,6 +359,7 @@ def test_setup_tasks_bash_passes_custom_branch_when_feature_json_valid(
     On a non-standard branch, setup-tasks.sh must succeed when feature.json
     pins a valid FEATURE_DIR (branch validation should be skipped).
     """
+    _minimal_feature(tasks_repo)
     subprocess.run(
         ["git", "checkout", "-q", "-b", "feature/custom-branch"],
         cwd=tasks_repo,
@@ -391,6 +398,7 @@ def test_setup_tasks_bash_fails_custom_branch_without_feature_json(
     On a non-standard branch with no feature.json, setup-tasks.sh must fail
     and report that we are not on a feature branch.
     """
+    _minimal_feature(tasks_repo)
     subprocess.run(
         ["git", "checkout", "-q", "-b", "feature/custom-branch"],
         cwd=tasks_repo,

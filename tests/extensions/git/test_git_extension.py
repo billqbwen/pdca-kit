@@ -154,11 +154,11 @@ class TestGitExtensionManifest:
 
         m = ExtensionManifest(EXT_DIR / "extension.yml")
         assert "before_constitution" in m.hooks
-        assert "before_specify" in m.hooks
-        assert "after_specify" in m.hooks
+        assert "before_define" in m.hooks
+        assert "after_define" in m.hooks
         assert "after_implement" in m.hooks
         assert m.hooks["before_constitution"]["command"] == "pdca.git.initialize"
-        assert m.hooks["before_specify"]["command"] == "pdca.git.feature"
+        assert m.hooks["before_define"]["command"] == "pdca.git.feature"
 
     def test_manifest_command_files_exist(self):
         """All command files referenced in the manifest exist."""

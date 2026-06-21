@@ -44,11 +44,11 @@ class TestCodexHookCommandNote:
         i = get_integration("codex")
         m = IntegrationManifest("codex", tmp_path)
         i.setup(tmp_path, m, script_type="sh")
-        specify_skill = tmp_path / ".agents/skills/pdca-specify/SKILL.md"
+        specify_skill = tmp_path / ".agents/skills/pdca-define/SKILL.md"
         assert specify_skill.exists()
         content = specify_skill.read_text(encoding="utf-8")
         assert "replace dots" in content, (
-            "pdca-specify should have dot-to-hyphen hook note"
+            "pdca-define should have dot-to-hyphen hook note"
         )
 
     def test_hook_note_not_in_skills_without_hooks(self):

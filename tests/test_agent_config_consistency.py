@@ -244,10 +244,10 @@ class TestAgentConfigConsistency:
         assert cmd_source.exists(), (
             f"Git extension command source not found at {cmd_source}"
         )
-        assert "__PDCA_COMMAND_SPECIFY__" in cmd_source.read_text(
+        assert "__PDCA_COMMAND_DEFINE__" in cmd_source.read_text(
             encoding="utf-8"
         ), (
-            "Expected __PDCA_COMMAND_SPECIFY__ token in pdca.git.feature.md; "
+            "Expected __PDCA_COMMAND_DEFINE__ token in pdca.git.feature.md; "
             "check that the file uses the token rather than a hard-coded ref."
         )
 
@@ -272,9 +272,9 @@ class TestAgentConfigConsistency:
             f"Expected Claude skill file not found at {skill_file}"
         )
         content = skill_file.read_text(encoding="utf-8")
-        assert "/pdca-specify" in content, (
-            "Expected '/pdca-specify' (hyphen) in generated Claude skill for git.feature; "
-            "__PDCA_COMMAND_SPECIFY__ was not resolved with the correct separator."
+        assert "/pdca-define" in content, (
+            "Expected '/pdca-define' (hyphen) in generated Claude skill for git.feature; "
+            "__PDCA_COMMAND_DEFINE__ was not resolved with the correct separator."
         )
         # Negative lookbehind (?<![a-zA-Z0-9_]) excludes file-path occurrences
         # such as 'source: git:commands/pdca.git.feature.md' in frontmatter,

@@ -34,7 +34,7 @@ if (-not (Test-Path $paths.IMPL_PLAN -PathType Leaf)) {
 
 if (-not (Test-Path $paths.FEATURE_SPEC -PathType Leaf)) {
     [Console]::Error.WriteLine("ERROR: spec.md not found in $($paths.FEATURE_DIR)")
-    [Console]::Error.WriteLine("Run __PDCA_COMMAND_SPECIFY__ first to create the feature structure.")
+    [Console]::Error.WriteLine("Run __PDCA_COMMAND_DEFINE__ first to create the feature structure.")
     exit 1
 }
 

@@ -74,8 +74,8 @@ class TestClaudeIntegration:
         ctx_path = tmp_path / integration.context_file
         assert ctx_path.exists()
         content = ctx_path.read_text(encoding="utf-8")
-        assert "<!-- SPECKIT START -->" in content
-        assert "<!-- SPECKIT END -->" in content
+        assert "<!-- PDCA START -->" in content
+        assert "<!-- PDCA END -->" in content
         assert "read the current plan" in content
 
     def test_upsert_context_section_strips_bom(self, tmp_path):
@@ -92,7 +92,7 @@ class TestClaudeIntegration:
         result = ctx_path.read_bytes()
         assert not result.startswith(bom), "BOM must be stripped after upsert"
         content = result.decode("utf-8")
-        assert "<!-- SPECKIT START -->" in content
+        assert "<!-- PDCA START -->" in content
         assert "Some existing content." in content
 
     def test_remove_context_section_strips_bom(self, tmp_path):
@@ -102,10 +102,10 @@ class TestClaudeIntegration:
 
         marker_content = (
             "# CLAUDE.md\n\n"
-            "<!-- SPECKIT START -->\n"
+            "<!-- PDCA START -->\n"
             "For additional context about technologies to be used, project structure,\n"
             "shell commands, and other important information, read the current plan\n"
-            "<!-- SPECKIT END -->\n"
+            "<!-- PDCA END -->\n"
         )
         ctx_path.write_bytes(codecs.BOM_UTF8 + marker_content.encode("utf-8"))
 
@@ -184,7 +184,7 @@ class TestClaudeIntegration:
             os.chdir(old_cwd)
 
         assert result.exit_code == 0, result.output
-        assert (project / ".claude" / "skills" / "pdca-specify" / "SKILL.md").exists()
+        assert (project / ".claude" / "skills" / "pdca-define" / "SKILL.md").exists()
         assert (project / ".pdca" / "integrations" / "claude.manifest.json").exists()
 
     def test_interactive_claude_selection_uses_integration_path(self, tmp_path):
@@ -247,7 +247,7 @@ class TestClaudeIntegration:
         )
 
         assert result.exit_code == 0
-        assert (target / ".claude" / "skills" / "pdca-specify" / "SKILL.md").exists()
+        assert (target / ".claude" / "skills" / "pdca-define" / "SKILL.md").exists()
 
     def test_claude_hooks_render_skill_invocation(self, tmp_path):
         from pdca_cli.extensions import HookExecutor
@@ -507,12 +507,12 @@ class TestClaudeHookCommandNote:
         i = get_integration("claude")
         m = IntegrationManifest("claude", tmp_path)
         i.setup(tmp_path, m, script_type="sh")
-        specify_skill = tmp_path / ".claude/skills/pdca-specify/SKILL.md"
+        specify_skill = tmp_path / ".claude/skills/pdca-define/SKILL.md"
         assert specify_skill.exists()
         content = specify_skill.read_text(encoding="utf-8")
         # specify.md has hook sections
         assert "replace dots" in content, (
-            "pdca-specify should have dot-to-hyphen hook note"
+            "pdca-define should have dot-to-hyphen hook note"
         )
 
     def test_hook_note_not_in_skills_without_hooks(self, tmp_path):

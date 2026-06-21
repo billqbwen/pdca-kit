@@ -118,7 +118,7 @@ class TestKimiLegacyMigration:
         assert not legacy.exists()
         assert (skills_dir / "pdca-oldcmd" / "SKILL.md").exists()
         # New skills from templates should also exist
-        assert (skills_dir / "pdca-specify" / "SKILL.md").exists()
+        assert (skills_dir / "pdca-define" / "SKILL.md").exists()
 
 
 class TestKimiNextSteps:

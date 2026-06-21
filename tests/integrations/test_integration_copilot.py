@@ -125,10 +125,11 @@ class TestCopilotIntegration:
         agents_dir = tmp_path / ".github" / "agents"
         assert agents_dir.is_dir()
         agent_files = sorted(agents_dir.glob("pdca.*.agent.md"))
-        assert len(agent_files) == 9
+        assert len(agent_files) == 14
         expected_commands = {
             "analyze", "checklist", "clarify", "constitution",
-            "implement", "plan", "specify", "tasks", "taskstoissues",
+            "implement", "plan", "define", "tasks", "taskstoissues",
+            "deploy", "release", "review", "test", "fallback",
         }
         actual_commands = {f.name.removeprefix("pdca.").removesuffix(".agent.md") for f in agent_files}
         assert actual_commands == expected_commands
@@ -147,8 +148,8 @@ class TestCopilotIntegration:
             assert "__PDCA_COMMAND_" not in content, f"{agent_file.name} has unprocessed __PDCA_COMMAND_*__"
             assert "\nscripts:\n" not in content
 
-    def test_specify_agent_resolves_active_spec_template(self, tmp_path):
-        """Generated specify agent must not hardcode the core spec template."""
+    def test_define_agent_resolves_active_spec_template(self, tmp_path):
+        """Generated define agent must not hardcode the core spec template."""
         from pdca_cli.integrations.copilot import CopilotIntegration
         copilot = CopilotIntegration()
         m = IntegrationManifest("copilot", tmp_path)
@@ -157,7 +158,7 @@ class TestCopilotIntegration:
         specify_file = tmp_path / ".github" / "agents" / "pdca.define.agent.md"
         content = specify_file.read_text(encoding="utf-8")
 
-        assert "specify preset resolve spec-template" in content
+        assert "pdca preset resolve spec-template" in content
         assert "resolved active `spec-template`" in content
         assert "Copy `.pdca/templates/spec-template.md`" not in content
         assert "Load `.pdca/templates/spec-template.md`" not in content
@@ -193,36 +194,37 @@ class TestCopilotIntegration:
         assert result.exit_code == 0
         actual = sorted(p.relative_to(project).as_posix() for p in project.rglob("*") if p.is_file())
         expected = sorted([
-            ".github/agents/pdca.agent-context.update.agent.md",
             ".github/agents/pdca.analyze.agent.md",
             ".github/agents/pdca.checklist.agent.md",
             ".github/agents/pdca.clarify.agent.md",
             ".github/agents/pdca.constitution.agent.md",
+            ".github/agents/pdca.deploy.agent.md",
+            ".github/agents/pdca.fallback.agent.md",
             ".github/agents/pdca.implement.agent.md",
             ".github/agents/pdca.plan.agent.md",
             ".github/agents/pdca.define.agent.md",
+            ".github/agents/pdca.release.agent.md",
+            ".github/agents/pdca.review.agent.md",
             ".github/agents/pdca.tasks.agent.md",
             ".github/agents/pdca.taskstoissues.agent.md",
-            ".github/prompts/pdca.agent-context.update.prompt.md",
+            ".github/agents/pdca.test.agent.md",
             ".github/prompts/pdca.analyze.prompt.md",
             ".github/prompts/pdca.checklist.prompt.md",
             ".github/prompts/pdca.clarify.prompt.md",
             ".github/prompts/pdca.constitution.prompt.md",
+            ".github/prompts/pdca.deploy.prompt.md",
+            ".github/prompts/pdca.fallback.prompt.md",
             ".github/prompts/pdca.implement.prompt.md",
             ".github/prompts/pdca.plan.prompt.md",
             ".github/prompts/pdca.define.prompt.md",
+            ".github/prompts/pdca.release.prompt.md",
+            ".github/prompts/pdca.review.prompt.md",
             ".github/prompts/pdca.tasks.prompt.md",
             ".github/prompts/pdca.taskstoissues.prompt.md",
+            ".github/prompts/pdca.test.prompt.md",
             ".vscode/settings.json",
             ".github/copilot-instructions.md",
-            ".pdca/extensions.yml",
-            ".pdca/extensions/.registry",
-            ".pdca/extensions/agent-context/README.md",
             ".pdca/extensions/agent-context/agent-context-config.yml",
-            ".pdca/extensions/agent-context/commands/pdca.agent-context.update.md",
-            ".pdca/extensions/agent-context/extension.yml",
-            ".pdca/extensions/agent-context/scripts/bash/update-agent-context.sh",
-            ".pdca/extensions/agent-context/scripts/powershell/update-agent-context.ps1",
             ".pdca/integration.json",
             ".pdca/init-options.json",
             ".pdca/integrations/copilot.manifest.json",
@@ -263,36 +265,37 @@ class TestCopilotIntegration:
         assert result.exit_code == 0
         actual = sorted(p.relative_to(project).as_posix() for p in project.rglob("*") if p.is_file())
         expected = sorted([
-            ".github/agents/pdca.agent-context.update.agent.md",
             ".github/agents/pdca.analyze.agent.md",
             ".github/agents/pdca.checklist.agent.md",
             ".github/agents/pdca.clarify.agent.md",
             ".github/agents/pdca.constitution.agent.md",
+            ".github/agents/pdca.deploy.agent.md",
+            ".github/agents/pdca.fallback.agent.md",
             ".github/agents/pdca.implement.agent.md",
             ".github/agents/pdca.plan.agent.md",
             ".github/agents/pdca.define.agent.md",
+            ".github/agents/pdca.release.agent.md",
+            ".github/agents/pdca.review.agent.md",
             ".github/agents/pdca.tasks.agent.md",
             ".github/agents/pdca.taskstoissues.agent.md",
-            ".github/prompts/pdca.agent-context.update.prompt.md",
+            ".github/agents/pdca.test.agent.md",
             ".github/prompts/pdca.analyze.prompt.md",
             ".github/prompts/pdca.checklist.prompt.md",
             ".github/prompts/pdca.clarify.prompt.md",
             ".github/prompts/pdca.constitution.prompt.md",
+            ".github/prompts/pdca.deploy.prompt.md",
+            ".github/prompts/pdca.fallback.prompt.md",
             ".github/prompts/pdca.implement.prompt.md",
             ".github/prompts/pdca.plan.prompt.md",
             ".github/prompts/pdca.define.prompt.md",
+            ".github/prompts/pdca.release.prompt.md",
+            ".github/prompts/pdca.review.prompt.md",
             ".github/prompts/pdca.tasks.prompt.md",
             ".github/prompts/pdca.taskstoissues.prompt.md",
+            ".github/prompts/pdca.test.prompt.md",
             ".vscode/settings.json",
             ".github/copilot-instructions.md",
-            ".pdca/extensions.yml",
-            ".pdca/extensions/.registry",
-            ".pdca/extensions/agent-context/README.md",
             ".pdca/extensions/agent-context/agent-context-config.yml",
-            ".pdca/extensions/agent-context/commands/pdca.agent-context.update.md",
-            ".pdca/extensions/agent-context/extension.yml",
-            ".pdca/extensions/agent-context/scripts/bash/update-agent-context.sh",
-            ".pdca/extensions/agent-context/scripts/powershell/update-agent-context.ps1",
             ".pdca/integration.json",
             ".pdca/init-options.json",
             ".pdca/integrations/copilot.manifest.json",
@@ -322,7 +325,8 @@ class TestCopilotSkillsMode:
 
     _SKILL_COMMANDS = [
         "analyze", "checklist", "clarify", "constitution",
-        "implement", "plan", "specify", "tasks", "taskstoissues",
+        "implement", "plan", "define", "tasks", "taskstoissues",
+        "deploy", "release", "review", "test", "fallback",
     ]
 
     def _make_copilot(self):
@@ -444,7 +448,7 @@ class TestCopilotSkillsMode:
         copilot = self._make_copilot()
         content = (
             "---\n"
-            'name: "pdca-specify"\n'
+            'name: "pdca-define"\n'
             'description: "Specify workflow"\n'
             "---\n"
             "\n- For each executable hook, output the following\n"
@@ -483,7 +487,7 @@ class TestCopilotSkillsMode:
         """Generated skills with hook sections should include shared hook guidance."""
         copilot = self._make_copilot()
         self._setup_skills(copilot, tmp_path)
-        specify_skill = tmp_path / ".github" / "skills" / "pdca-specify" / "SKILL.md"
+        specify_skill = tmp_path / ".github" / "skills" / "pdca-define" / "SKILL.md"
         content = specify_skill.read_text(encoding="utf-8")
         assert "replace dots" in content
 
@@ -605,8 +609,8 @@ class TestCopilotSkillsMode:
         ctx_path = tmp_path / copilot.context_file
         assert ctx_path.exists()
         content = ctx_path.read_text(encoding="utf-8")
-        assert "<!-- SPECKIT START -->" in content
-        assert "<!-- SPECKIT END -->" in content
+        assert "<!-- PDCA START -->" in content
+        assert "<!-- PDCA END -->" in content
 
     # -- CLI integration test ---------------------------------------------
 
@@ -655,20 +659,12 @@ class TestCopilotSkillsMode:
         assert result.exit_code == 0, f"init failed: {result.output}"
         actual = sorted(p.relative_to(project).as_posix() for p in project.rglob("*") if p.is_file())
         expected = sorted([
-            # Skill files (core + extension-installed agent-context command)
+            # Skill files
             *[f".github/skills/pdca-{cmd}/SKILL.md" for cmd in self._SKILL_COMMANDS],
-            ".github/skills/pdca-agent-context-update/SKILL.md",
             # Context file
             ".github/copilot-instructions.md",
-            # Bundled agent-context extension
-            ".pdca/extensions.yml",
-            ".pdca/extensions/.registry",
-            ".pdca/extensions/agent-context/README.md",
+            # Agent-context config
             ".pdca/extensions/agent-context/agent-context-config.yml",
-            ".pdca/extensions/agent-context/commands/pdca.agent-context.update.md",
-            ".pdca/extensions/agent-context/extension.yml",
-            ".pdca/extensions/agent-context/scripts/bash/update-agent-context.sh",
-            ".pdca/extensions/agent-context/scripts/powershell/update-agent-context.ps1",
             # Integration metadata
             ".pdca/init-options.json",
             ".pdca/integration.json",

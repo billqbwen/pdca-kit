@@ -205,11 +205,11 @@ class TestHermesIntegration(SkillsIntegrationTests):
         i = get_integration(self.KEY)
         m = IntegrationManifest(self.KEY, tmp_path)
         i.setup(tmp_path, m)
-        specify_skill = home / ".hermes" / "skills" / "pdca-specify" / "SKILL.md"
+        specify_skill = home / ".hermes" / "skills" / "pdca-define" / "SKILL.md"
         assert specify_skill.exists()
         content = specify_skill.read_text(encoding="utf-8")
         assert "replace dots" in content, (
-            "pdca-specify should explain dotted hook command conversion"
+            "pdca-define should explain dotted hook command conversion"
         )
         assert content.count("replace dots") == content.count(
             "- For each executable hook, output the following"

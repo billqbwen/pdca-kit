@@ -101,7 +101,8 @@ class SkillsIntegrationTests:
 
         expected_commands = {
             "analyze", "checklist", "clarify", "constitution",
-            "implement", "plan", "specify", "tasks", "taskstoissues",
+            "define", "deploy", "fallback", "implement",
+            "plan", "release", "review", "tasks", "taskstoissues", "test",
         }
 
         # Derive command names from the skill directory names
@@ -181,11 +182,11 @@ class SkillsIntegrationTests:
         i = get_integration(self.KEY)
         m = IntegrationManifest(self.KEY, tmp_path)
         i.setup(tmp_path, m)
-        specify_skill = i.skills_dest(tmp_path) / "pdca-specify" / "SKILL.md"
+        specify_skill = i.skills_dest(tmp_path) / "pdca-define" / "SKILL.md"
         assert specify_skill.exists()
         content = specify_skill.read_text(encoding="utf-8")
         assert "replace dots" in content, (
-            "pdca-specify should explain dotted hook command conversion"
+            "pdca-define should explain dotted hook command conversion"
         )
         assert content.count("replace dots") == content.count(
             "- For each executable hook, output the following"
@@ -293,8 +294,8 @@ class SkillsIntegrationTests:
             ctx_path = tmp_path / i.context_file
             assert ctx_path.exists(), f"Context file {i.context_file} not created for {self.KEY}"
             content = ctx_path.read_text(encoding="utf-8")
-            assert "<!-- SPECKIT START -->" in content
-            assert "<!-- SPECKIT END -->" in content
+            assert "<!-- PDCA START -->" in content
+            assert "<!-- PDCA END -->" in content
             assert "read the current plan" in content
 
     def test_teardown_removes_context_section(self, tmp_path):
@@ -308,8 +309,8 @@ class SkillsIntegrationTests:
             ctx_path.write_text("# My Rules\n\n" + content + "\n# Footer\n", encoding="utf-8")
             i.teardown(tmp_path, m)
             remaining = ctx_path.read_text(encoding="utf-8")
-            assert "<!-- SPECKIT START -->" not in remaining
-            assert "<!-- SPECKIT END -->" not in remaining
+            assert "<!-- PDCA START -->" not in remaining
+            assert "<!-- PDCA END -->" not in remaining
             assert "# My Rules" in remaining
 
     # -- CLI auto-promote -------------------------------------------------
@@ -394,7 +395,8 @@ class SkillsIntegrationTests:
 
     _SKILL_COMMANDS = [
         "analyze", "checklist", "clarify", "constitution",
-        "implement", "plan", "specify", "tasks", "taskstoissues",
+        "implement", "plan", "define", "tasks", "taskstoissues",
+        "deploy", "release", "review", "test", "fallback",
     ]
 
     def _expected_files(self, script_variant: str) -> list[str]:
@@ -406,8 +408,7 @@ class SkillsIntegrationTests:
         # Skill files (core commands)
         for cmd in self._SKILL_COMMANDS:
             files.append(f"{skills_prefix}/pdca-{cmd}/SKILL.md")
-        # Extension-installed skill (agent-context)
-        files.append(f"{skills_prefix}/pdca-agent-context-update/SKILL.md")
+        # (agent-context extension skill omitted — --ignore-agent-tools skips it)
         # Integration metadata
         files += [
             ".pdca/init-options.json",
@@ -446,15 +447,9 @@ class SkillsIntegrationTests:
             ".pdca/workflows/pdca/workflow.yml",
             ".pdca/workflows/workflow-registry.json",
         ]
-        # Bundled agent-context extension
-        files.append(".pdca/extensions.yml")
-        files.append(".pdca/extensions/.registry")
-        files.append(".pdca/extensions/agent-context/README.md")
+        # Agent-context config (always created by init, even with --ignore-agent-tools)
         files.append(".pdca/extensions/agent-context/agent-context-config.yml")
-        files.append(".pdca/extensions/agent-context/commands/pdca.agent-context.update.md")
-        files.append(".pdca/extensions/agent-context/extension.yml")
-        files.append(".pdca/extensions/agent-context/scripts/bash/update-agent-context.sh")
-        files.append(".pdca/extensions/agent-context/scripts/powershell/update-agent-context.ps1")
+        # (other bundled agent-context extension files omitted — --ignore-agent-tools skips them)
         # Agent context file (if set)
         if i.context_file:
             files.append(i.context_file)

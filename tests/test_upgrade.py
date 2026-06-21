@@ -63,8 +63,8 @@ class TestSelfUpgradeStub:
         assert result.exit_code == 0
         lines = strip_ansi(result.output).strip().splitlines()
         assert lines == [
-            "specify self upgrade is not implemented yet.",
-            "Run 'specify self check' to see whether a newer release is available.",
+            "pdca self upgrade is not implemented yet.",
+            "Run 'pdca self check' to see whether a newer release is available.",
             "Actual self-upgrade is planned as follow-up work.",
         ]
 

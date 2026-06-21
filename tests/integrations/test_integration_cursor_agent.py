@@ -13,7 +13,7 @@ class TestCursorAgentIntegration(SkillsIntegrationTests):
     FOLDER = ".cursor/"
     COMMANDS_SUBDIR = "skills"
     REGISTRAR_DIR = ".cursor/skills"
-    CONTEXT_FILE = ".cursor/rules/specify-rules.mdc"
+    CONTEXT_FILE = ".cursor/rules/pdca-rules.mdc"
 
 
 class TestCursorMdcFrontmatter:
@@ -57,7 +57,7 @@ class TestCursorMdcFrontmatter:
         content = ctx_path.read_text(encoding="utf-8")
         assert "alwaysApply: true" in content
         assert "customKey: hello" in content
-        assert "<!-- SPECKIT START -->" in content
+        assert "<!-- PDCA START -->" in content
 
     def test_existing_mdc_wrong_alwaysapply_fixed(self, tmp_path):
         """An .mdc with alwaysApply: false gets corrected."""

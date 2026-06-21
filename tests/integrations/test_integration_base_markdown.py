@@ -159,8 +159,8 @@ class MarkdownIntegrationTests:
             ctx_path = tmp_path / i.context_file
             assert ctx_path.exists(), f"Context file {i.context_file} not created for {self.KEY}"
             content = ctx_path.read_text(encoding="utf-8")
-            assert "<!-- SPECKIT START -->" in content
-            assert "<!-- SPECKIT END -->" in content
+            assert "<!-- PDCA START -->" in content
+            assert "<!-- PDCA END -->" in content
             assert "read the current plan" in content
 
     def test_teardown_removes_context_section(self, tmp_path):
@@ -175,8 +175,8 @@ class MarkdownIntegrationTests:
             ctx_path.write_text("# My Rules\n\n" + content + "\n# Footer\n", encoding="utf-8")
             i.teardown(tmp_path, m)
             remaining = ctx_path.read_text(encoding="utf-8")
-            assert "<!-- SPECKIT START -->" not in remaining
-            assert "<!-- SPECKIT END -->" not in remaining
+            assert "<!-- PDCA START -->" not in remaining
+            assert "<!-- PDCA END -->" not in remaining
             assert "# My Rules" in remaining
 
     # -- CLI auto-promote -------------------------------------------------
@@ -253,9 +253,9 @@ class MarkdownIntegrationTests:
     # -- Complete file inventory ------------------------------------------
 
     COMMAND_STEMS = [
-        "agent-context.update",
         "analyze", "checklist", "clarify", "constitution",
-        "implement", "plan", "specify", "tasks", "taskstoissues",
+        "implement", "plan", "define", "tasks", "taskstoissues",
+        "deploy", "release", "review", "test", "fallback",
     ]
 
     def _expected_files(self, script_variant: str) -> list[str]:
@@ -293,15 +293,9 @@ class MarkdownIntegrationTests:
         files.append(".pdca/workflows/pdca/workflow.yml")
         files.append(".pdca/workflows/workflow-registry.json")
 
-        # Bundled agent-context extension
-        files.append(".pdca/extensions.yml")
-        files.append(".pdca/extensions/.registry")
-        files.append(".pdca/extensions/agent-context/README.md")
+        # Agent-context config (always created by init, even with --ignore-agent-tools)
         files.append(".pdca/extensions/agent-context/agent-context-config.yml")
-        files.append(".pdca/extensions/agent-context/commands/pdca.agent-context.update.md")
-        files.append(".pdca/extensions/agent-context/extension.yml")
-        files.append(".pdca/extensions/agent-context/scripts/bash/update-agent-context.sh")
-        files.append(".pdca/extensions/agent-context/scripts/powershell/update-agent-context.ps1")
+        # (other bundled agent-context extension files omitted — --ignore-agent-tools skips them)
 
         # Agent context file (if set)
         if i.context_file:
