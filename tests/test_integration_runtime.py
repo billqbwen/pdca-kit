@@ -217,7 +217,7 @@ class TestWithIntegrationSetting:
         """Should return a new dict, not modify the input."""
         state = {"integration_settings": {"other": {"script": "sh"}}}
         integration = DummyIntegration()
-        result = with_integration_setting(
+        with_integration_setting(
             state, "dummy", integration, script_type="sh",
         )
         # original state should be unchanged

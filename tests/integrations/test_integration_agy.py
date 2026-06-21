@@ -131,5 +131,5 @@ class TestAgyHookCommandNote:
         )
         result = AgyIntegration._inject_hook_command_note(content)
         lines = result.splitlines()
-        note_line = [l for l in lines if "replace dots" in l][0]
+        note_line = [line for line in lines if "replace dots" in line][0]
         assert note_line.startswith("   "), "Note should preserve indentation"

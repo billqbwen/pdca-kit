@@ -29,12 +29,11 @@ Or install globally:
 import os
 import sys
 import tempfile
-import zipfile
 import json
 import yaml
 from pathlib import Path
 
-from typing import Any, Optional
+from typing import Any
 
 import typer
 from rich.panel import Panel
@@ -56,7 +55,6 @@ from ._console import (
     show_banner,
 )
 from ._assets import (
-    _locate_bundled_extension,
     _locate_bundled_preset,
     _locate_bundled_workflow as _locate_bundled_workflow,
     _locate_core_pack,

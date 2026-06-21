@@ -41,7 +41,7 @@ class TestLocateCorePack:
         core_pack.mkdir()
 
         import pdca_cli._assets as assets_mod
-        original_file = assets_mod.__file__
+
         fake_file = fake_dir / "_assets.py"
         fake_file.write_text("", encoding="utf-8")
 
